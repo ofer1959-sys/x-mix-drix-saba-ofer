@@ -5,13 +5,18 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    pingTimeout: 60000,
+    cors: { origin: "*" }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 const rooms = {};
 
 io.on('connection', (socket) => {
+    console.log('משתמש התחבר:', socket.id);
+
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
@@ -24,26 +29,30 @@ io.on('connection', (socket) => {
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, symbol: 'X', playerName });
+        console.log(`חדר נוצר: ${roomCode} על ידי ${playerName}`);
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const room = rooms[roomCode];
-        if (room && room.players.length === 1) {
-            room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-            socket.join(roomCode);
-            // שליחת עדכון לכולם שהמשחק התחיל
-            socket.emit('roomJoined', { roomCode, symbol: 'O', playerName });
-            io.to(roomCode).emit('gameStarted', room);
-        } else if (room && room.players.length >= 2) {
-            socket.emit('errorMsg', 'החדר מלא.');
+        if (room) {
+            if (room.players.length === 1) {
+                room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
+                socket.join(roomCode);
+                socket.emit('roomJoined', { roomCode, symbol: 'O', playerName });
+                io.to(roomCode).emit('gameStarted', room);
+                console.log(`${playerName} הצטרף לחדר: ${roomCode}`);
+            } else {
+                socket.emit('errorMsg', 'החדר כבר מלא.');
+            }
         } else {
-            socket.emit('errorMsg', 'החדר לא נמצא.');
+            console.log(`ניסיון הצטרפות לחדר לא קיים: ${roomCode}`);
+            socket.emit('errorMsg', 'החדר לא נמצא. אולי המשחק פג תוקף? צרו חדר חדש.');
         }
     });
 
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '' && room.turn) {
+        if (room && room.board[index] === '') {
             const player = room.players.find(p => p.id === socket.id);
             if (player && player.symbol === room.turn) {
                 room.board[index] = player.symbol;
@@ -71,7 +80,17 @@ io.on('connection', (socket) => {
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
         }
     });
+
+    socket.on('disconnect', () => {
+        // ניקוי חדרים ריקים כשאנשים מתנתקים
+        for (const code in rooms) {
+            rooms[code].players = rooms[code].players.filter(p => p.id !== socket.id);
+            if (rooms[code].players.length === 0) {
+                delete rooms[code];
+            }
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`שרת רץ על פורט ${PORT}`));
