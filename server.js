@@ -5,7 +5,11 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { pingTimeout: 30000, cors: { origin: "*" } });
+const io = new Server(server, {
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    cors: { origin: "*" }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -18,8 +22,7 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
             turn: 'X',
-            draws: 0,
-            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+            draws: 0
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, symbol: 'X' });
@@ -27,13 +30,18 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const room = rooms[roomCode];
-        if (room && room.players.length === 1) {
-            room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-            socket.join(roomCode);
-            socket.emit('roomJoined', { roomCode, symbol: 'O' });
-            io.to(roomCode).emit('gameStarted', room);
+        if (room) {
+            if (room.players.length === 1) {
+                room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
+                socket.join(roomCode);
+                socket.emit('roomJoined', { roomCode, symbol: 'O' });
+                io.to(roomCode).emit('gameStarted', room);
+            } else if (room.players.length >= 2) {
+                // בדיקה אם אחד השחקנים המקוריים התנתק
+                socket.emit('errorMsg', 'החדר כבר מלא.');
+            }
         } else {
-            socket.emit('errorMsg', 'חדר לא נמצא או מלא');
+            socket.emit('errorMsg', 'החדר לא נמצא. וודאו שהקוד נכון או צרו חדר חדש.');
         }
     });
 
@@ -55,9 +63,8 @@ io.on('connection', (socket) => {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
             room.board = Array(9).fill('');
-            room.turn = 'X'; // תמיד X מתחיל סיבוב חדש כדי למנוע בלבול
+            room.turn = 'X';
             io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
-            // שליחת עדכון לוח נוסף אחרי חצי שנייה כדי לוודא סנכרון
             setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
@@ -74,9 +81,14 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        // מנקה חדרים רק אם עברו 5 דקות של חוסר פעילות (אופציונלי)
         for (const code in rooms) {
             rooms[code].players = rooms[code].players.filter(p => p.id !== socket.id);
-            if (rooms[code].players.length === 0) delete rooms[code];
+            if (rooms[code].players.length === 0) {
+                setTimeout(() => {
+                    if (rooms[code] && rooms[code].players.length === 0) delete rooms[code];
+                }, 10000); // 10 שניות חסד לפני מחיקה
+            }
         }
     });
 });
