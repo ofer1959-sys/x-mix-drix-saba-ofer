@@ -37,7 +37,7 @@ document.getElementById('joinBtn').addEventListener('click', () => {
 
 document.getElementById('inviteWhatsAppBtn').addEventListener('click', () => {
     const gameUrl = window.location.origin;
-    const msg = `בוא לשחק איתי איקס מיקס דריקס! 🎮\nקוד החדר שלנו הוא: *${currentRoomCode}*\nהיכנס לקישור והצטרף:\n${gameUrl}`;
+    const msg = `בוא לשחק איתי איקס מיקס דריקס של סבא עופר! 🎮\nקוד החדר שלנו הוא: *${currentRoomCode}*\nהיכנס לקישור והצטרף:\n${gameUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
 });
 
@@ -90,14 +90,19 @@ function updateUI() {
         turnInd.innerText = "התור שלך!";
         turnInd.style.color = "var(--secondary)";
     } else {
-        turnInd.innerText = "תור השחקן השני...";
+        const otherPlayer = roomData.players.find(p => p.symbol !== mySymbol);
+        turnInd.innerText = `תור של ${otherPlayer ? otherPlayer.name : 'השחקן השני'}...`;
         turnInd.style.color = "#999";
     }
 
     const p1 = roomData.players[0];
     const p2 = roomData.players[1];
     if (p1 && p2) {
-        document.getElementById('scoreText').innerText = `${p1.name}: ${p1.score} | ${p2.name}: ${p2.score}`;
+        document.getElementById('scoreText').innerHTML = `
+            ${p1.name}: ${p1.score} <br>
+            ${p2.name}: ${p2.score} <br>
+            תיקו: ${roomData.draws || 0}
+        `;
     }
 }
 
@@ -148,8 +153,25 @@ document.getElementById('endGameBtn').addEventListener('click', () => {
     const endTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
     const p1 = roomData.players[0];
     const p2 = roomData.players[1];
+    const totalGames = p1.score + p2.score + (roomData.draws || 0);
+
+    let winnerText = "";
+    if (p1.score > p2.score) {
+        winnerText = `המנצח הוא: ${p1.name}`;
+    } else if (p2.score > p1.score) {
+        winnerText = `המנצח הוא: ${p2.name}`;
+    } else {
+        winnerText = "המנצח הוא שנינו, שנהנינו לשחק באיקס מיקס דריקס של סבא עופר";
+    }
     
-    const msg = `איזה משחק מטורף! 🎮\nשיחקנו איקס מיקס דריקס בתאריך ${roomData.date}.\nהתחלנו ב-${roomData.startTime} וסיימנו ב-${endTime}.\n\nתוצאת הסיום:\n🏆 ${p1.name}: ${p1.score}\n🏆 ${p2.name}: ${p2.score}\n\nהיה ממש כיף!`;
+    const msg = `שיחקנו עד עכשיו ${totalGames} משחקים באיקס מיקס דריקס של סבא עופר! 🎮
+התחלנו ב-${roomData.startTime} וסיימנו ב-${endTime}.
+
+${p1.name} ניצח ב-${p1.score} משחקים.
+${p2.name} ניצח ב-${p2.score} משחקים.
+תיקו יצא ב-${roomData.draws || 0} משחקים.
+
+${winnerText}.`;
     
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     window.location.reload();
