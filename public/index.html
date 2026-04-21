@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>איקס מיקס דריקס</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="lobby" class="screen active">
+        <h1>🎮 משחקים יחד!</h1>
+        <div class="card">
+            <input type="text" id="playerName" placeholder="השם שלך (למשל: אלה)" autocomplete="off">
+            <button id="createBtn" class="btn-primary">צור משחק חדש</button>
+            <hr>
+            <input type="text" id="roomCodeInput" placeholder="יש לך קוד חדר?" autocomplete="off">
+            <button id="joinBtn" class="btn-secondary">הצטרף למשחק</button>
+        </div>
+    </div>
+
+    <div id="waitingScreen" class="screen">
+        <h2>קוד החדר: <span id="inviteCode" class="highlight"></span></h2>
+        <p>שלח את הקוד לשחקן השני, או לחץ כאן:</p>
+        <button id="inviteWhatsAppBtn" class="btn-whatsapp">הזמן בוואטסאפ 💬</button>
+        <div class="loader">ממתין להצטרפות...</div>
+    </div>
+
+    <div id="gameScreen" class="screen">
+        <div class="header">
+            <h2>חדר: <span id="displayRoomCode"></span></h2>
+        </div>
+        <h3 id="turnIndicator">מתחילים!</h3>
+        
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="scoreboard">
+            <p>🏆 מאזן ניצחונות 🏆</p>
+            <h3 id="scoreText">0 - 0</h3>
+        </div>
+        <button id="endGameBtn" class="btn-end">סיום משחק ושיתוף תוצאה</button>
+    </div>
+
+    <div id="winPopup" class="popup hidden">
+        <h1 id="winMessage">כל הכבוד!</h1>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
