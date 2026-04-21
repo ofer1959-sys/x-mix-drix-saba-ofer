@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap');
+
+:root { --primary: #FF6B6B; --secondary: #4ECDC4; --bg: #f4fcf4; --text: #2D3142; }
+
+body {
+    font-family: 'Rubik', sans-serif; background-color: var(--bg);
+    color: var(--text); margin: 0; display: flex; justify-content: center;
+    align-items: center; min-height: 100vh; text-align: center;
+}
+
+.screen { display: none; width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
+.screen.active { display: block; animation: fadeIn 0.4s ease; }
+
+h1 { color: var(--primary); font-size: 2.2rem; }
+.highlight { color: var(--secondary); font-size: 2rem; display: block; margin: 10px 0; }
+
+input {
+    width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px;
+    border: 2px solid #ddd; font-size: 1.1rem; box-sizing: border-box; font-family: inherit;
+}
+
+button {
+    width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px;
+    border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    font-family: inherit; transition: transform 0.1s;
+}
+button:active { transform: scale(0.96); }
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-whatsapp { background: #25D366; color: white; }
+.btn-end { background: #ff4757; color: white; margin-top: 20px; }
+
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+.cell {
+    background: white; border-radius: 15px; height: 90px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 3.5rem; font-weight: bold; cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.cell.x { color: var(--primary); }
+.cell.o { color: var(--secondary); }
+
+.scoreboard { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.scoreboard p { margin: 0 0 5px 0; color: #666; font-size: 0.9rem;}
+.scoreboard h3 { margin: 0; font-size: 1.5rem; }
+
+.popup {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.95); display: flex; justify-content: center;
+    align-items: center; z-index: 100; flex-direction: column;
+}
+.popup.hidden { display: none; }
+.popup h1 { font-size: 3.5rem; animation: pop 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.28); color: var(--primary); text-align: center; padding: 20px;}
+
+.loader { margin-top: 20px; color: #888; font-style: italic; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
