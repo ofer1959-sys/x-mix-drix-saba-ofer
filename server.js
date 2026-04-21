@@ -6,14 +6,18 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    pingTimeout: 30000,
+    pingInterval: 10000,
     cors: { origin: "*" }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const rooms = {};
+let rooms = {};
 
 io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
@@ -21,34 +25,39 @@ io.on('connection', (socket) => {
             board: Array(9).fill(''),
             turn: 'X',
             draws: 0,
-            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            date: new Date().toLocaleDateString('he-IL')
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, symbol: 'X' });
+        console.log(`Room created: ${roomCode}`);
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const room = rooms[roomCode];
-        if (room && room.players.length === 1) {
-            room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-            socket.join(roomCode);
-            socket.emit('roomJoined', { roomCode, symbol: 'O' });
-            // שליחה לכל החדר שהמשחק התחיל
-            io.in(roomCode).emit('gameStarted', room);
+        if (room) {
+            if (room.players.length === 1) {
+                room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
+                socket.join(roomCode);
+                socket.emit('roomJoined', { roomCode, symbol: 'O' });
+                io.to(roomCode).emit('gameStarted', room);
+                console.log(`${playerName} joined ${roomCode}`);
+            } else {
+                socket.emit('errorMsg', 'החדר כבר מלא.');
+            }
         } else {
-            socket.emit('errorMsg', room ? 'החדר מלא' : 'החדר לא נמצא');
+            socket.emit('errorMsg', 'החדר לא נמצא. וודאו שהעתקתם נכון או צרו חדר חדש.');
         }
     });
 
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '') {
+        if (room && room.board[index] === '' && room.turn) {
             const player = room.players.find(p => p.id === socket.id);
             if (player && player.symbol === room.turn) {
                 room.board[index] = player.symbol;
                 room.turn = room.turn === 'X' ? 'O' : 'X';
-                // עדכון מיידי לכל המשתתפים
-                io.in(roomCode).emit('updateBoard', room);
+                io.to(roomCode).emit('updateBoard', room);
             }
         }
     });
@@ -58,8 +67,8 @@ io.on('connection', (socket) => {
         if (room) {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
-            room.board = Array(9).fill('');
-            io.in(roomCode).emit('roundEnded', { room, winnerName: winner.name });
+            room.board = Array(9).fill(''); 
+            io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
         }
     });
 
@@ -68,10 +77,14 @@ io.on('connection', (socket) => {
         if (room) {
             room.draws += 1;
             room.board = Array(9).fill('');
-            io.in(roomCode).emit('roundEnded', { room, winnerName: null });
+            io.to(roomCode).emit('roundEnded', { room, winnerName: null });
         }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
