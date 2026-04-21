@@ -5,11 +5,7 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    pingTimeout: 30000,
-    pingInterval: 10000,
-    cors: { origin: "*" }
-});
+const io = new Server(server, { pingTimeout: 30000, cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -21,7 +17,7 @@ io.on('connection', (socket) => {
         rooms[roomCode] = {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
-            turn: 'X', // X תמיד מתחיל בסיבוב הראשון
+            turn: 'X',
             draws: 0,
             startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
         };
@@ -58,16 +54,11 @@ io.on('connection', (socket) => {
         if (room) {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
-            
-            // איפוס הלוח לסיבוב הבא
             room.board = Array(9).fill('');
-            // המנצח הוא זה שמתחיל את הסיבוב הבא (או שתוכל לקבוע ש-X תמיד מתחיל)
-            room.turn = symbol; 
-            
-            // שליחת עדכון סיום ורענון לוח לכולם בו זמנית
+            room.turn = 'X'; // תמיד X מתחיל סיבוב חדש כדי למנוע בלבול
             io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
-            // הוספת פקודה מפורשת לרענן את הלוח אצל כולם
-            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 100);
+            // שליחת עדכון לוח נוסף אחרי חצי שנייה כדי לוודא סנכרון
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 
@@ -76,10 +67,9 @@ io.on('connection', (socket) => {
         if (room) {
             room.draws += 1;
             room.board = Array(9).fill('');
-            room.turn = 'X'; // בתיקו X מתחיל מחדש
-            
+            room.turn = 'X';
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
-            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 100);
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 
@@ -92,4 +82,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server on ${PORT}`));
