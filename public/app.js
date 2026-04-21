@@ -10,6 +10,17 @@ let mySymbol = '';
 let currentRoomCode = '';
 let roomData = null;
 
+// פונקציה שבודקת אם הגענו מקישור הזמנה שמכיל קוד חדר
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+    if (roomFromUrl) {
+        document.getElementById('roomCodeInput').value = roomFromUrl;
+        // מתמקד אוטומטית על שדה השם כדי שיהיה נוח ישר להקליד
+        document.getElementById('playerName').focus();
+    }
+});
+
 function showScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[screenName].classList.add('active');
@@ -36,8 +47,9 @@ document.getElementById('joinBtn').addEventListener('click', () => {
 });
 
 document.getElementById('inviteWhatsAppBtn').addEventListener('click', () => {
-    const gameUrl = window.location.origin;
-    const msg = `בוא לשחק איתי איקס מיקס דריקס של סבא עופר! 🎮\nקוד החדר שלנו הוא: *${currentRoomCode}*\nהיכנס לקישור והצטרף:\n${gameUrl}`;
+    // יצירת הקישור החכם שמכיל את קוד החדר בתוכו
+    const gameUrl = `${window.location.origin}?room=${currentRoomCode}`;
+    const msg = `בוא לשחק איתי איקס מיקס דריקס של סבא עופר! 🎮\nהיכנס לקישור והצטרף אוטומטית לחדר:\n${gameUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
 });
 
@@ -52,6 +64,8 @@ socket.on('roomJoined', ({ roomCode, symbol }) => {
     mySymbol = symbol;
     currentRoomCode = roomCode;
     document.getElementById('displayRoomCode').innerText = roomCode;
+    // ניקוי שורת הכתובת כדי שתיראה נקייה אחרי ההצטרפות
+    window.history.replaceState({}, document.title, window.location.pathname);
     showScreen('game');
 });
 
@@ -86,12 +100,14 @@ function updateUI() {
     });
 
     const turnInd = document.getElementById('turnIndicator');
+    const otherPlayer = roomData.players.find(p => p.symbol !== mySymbol);
+    
     if (roomData.turn === mySymbol) {
         turnInd.innerText = "התור שלך!";
         turnInd.style.color = "var(--secondary)";
     } else {
-        const otherPlayer = roomData.players.find(p => p.symbol !== mySymbol);
-        turnInd.innerText = `תור של ${otherPlayer ? otherPlayer.name : 'השחקן השני'}...`;
+        const otherName = otherPlayer ? otherPlayer.name : 'השחקן השני';
+        turnInd.innerText = `תור של ${otherName}...`;
         turnInd.style.color = "#999";
     }
 
@@ -153,15 +169,16 @@ document.getElementById('endGameBtn').addEventListener('click', () => {
     const endTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
     const p1 = roomData.players[0];
     const p2 = roomData.players[1];
-    const totalGames = p1.score + p2.score + (roomData.draws || 0);
+    const draws = roomData.draws || 0;
+    const totalGames = p1.score + p2.score + draws;
 
-    let winnerText = "";
+    let winnerLine = "";
     if (p1.score > p2.score) {
-        winnerText = `המנצח הוא: ${p1.name}`;
+        winnerLine = `המנצח הוא: ${p1.name}`;
     } else if (p2.score > p1.score) {
-        winnerText = `המנצח הוא: ${p2.name}`;
+        winnerLine = `המנצח הוא: ${p2.name}`;
     } else {
-        winnerText = "המנצח הוא שנינו, שנהנינו לשחק באיקס מיקס דריקס של סבא עופר";
+        winnerLine = "המנצח הוא שנינו, שנהנינו לשחק באיקס מיקס דריקס של סבא עופר";
     }
     
     const msg = `שיחקנו עד עכשיו ${totalGames} משחקים באיקס מיקס דריקס של סבא עופר! 🎮
@@ -169,9 +186,9 @@ document.getElementById('endGameBtn').addEventListener('click', () => {
 
 ${p1.name} ניצח ב-${p1.score} משחקים.
 ${p2.name} ניצח ב-${p2.score} משחקים.
-תיקו יצא ב-${roomData.draws || 0} משחקים.
+תיקו יצא ב-${draws} משחקים.
 
-${winnerText}.`;
+${winnerLine}.`;
     
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     window.location.reload();
