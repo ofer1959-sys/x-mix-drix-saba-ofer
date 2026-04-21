@@ -31,16 +31,19 @@ io.on('connection', (socket) => {
         if (room && room.players.length === 1) {
             room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
             socket.join(roomCode);
+            // שליחת עדכון לכולם שהמשחק התחיל
             socket.emit('roomJoined', { roomCode, symbol: 'O', playerName });
             io.to(roomCode).emit('gameStarted', room);
+        } else if (room && room.players.length >= 2) {
+            socket.emit('errorMsg', 'החדר מלא.');
         } else {
-            socket.emit('errorMsg', 'החדר לא קיים או שכבר מלא.');
+            socket.emit('errorMsg', 'החדר לא נמצא.');
         }
     });
 
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '') {
+        if (room && room.board[index] === '' && room.turn) {
             const player = room.players.find(p => p.id === socket.id);
             if (player && player.symbol === room.turn) {
                 room.board[index] = player.symbol;
@@ -71,6 +74,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
