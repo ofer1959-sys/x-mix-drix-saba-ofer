@@ -16,37 +16,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 let rooms = {};
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
-
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
-            turn: 'X',
+            turn: 'X', // X תמיד מתחיל בסיבוב הראשון
             draws: 0,
-            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-            date: new Date().toLocaleDateString('he-IL')
+            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, symbol: 'X' });
-        console.log(`Room created: ${roomCode}`);
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const room = rooms[roomCode];
-        if (room) {
-            if (room.players.length === 1) {
-                room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-                socket.join(roomCode);
-                socket.emit('roomJoined', { roomCode, symbol: 'O' });
-                io.to(roomCode).emit('gameStarted', room);
-                console.log(`${playerName} joined ${roomCode}`);
-            } else {
-                socket.emit('errorMsg', 'החדר כבר מלא.');
-            }
+        if (room && room.players.length === 1) {
+            room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
+            socket.join(roomCode);
+            socket.emit('roomJoined', { roomCode, symbol: 'O' });
+            io.to(roomCode).emit('gameStarted', room);
         } else {
-            socket.emit('errorMsg', 'החדר לא נמצא. וודאו שהעתקתם נכון או צרו חדר חדש.');
+            socket.emit('errorMsg', 'חדר לא נמצא או מלא');
         }
     });
 
@@ -67,8 +58,16 @@ io.on('connection', (socket) => {
         if (room) {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
-            room.board = Array(9).fill(''); 
+            
+            // איפוס הלוח לסיבוב הבא
+            room.board = Array(9).fill('');
+            // המנצח הוא זה שמתחיל את הסיבוב הבא (או שתוכל לקבוע ש-X תמיד מתחיל)
+            room.turn = symbol; 
+            
+            // שליחת עדכון סיום ורענון לוח לכולם בו זמנית
             io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
+            // הוספת פקודה מפורשת לרענן את הלוח אצל כולם
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 100);
         }
     });
 
@@ -77,12 +76,18 @@ io.on('connection', (socket) => {
         if (room) {
             room.draws += 1;
             room.board = Array(9).fill('');
+            room.turn = 'X'; // בתיקו X מתחיל מחדש
+            
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 100);
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+        for (const code in rooms) {
+            rooms[code].players = rooms[code].players.filter(p => p.id !== socket.id);
+            if (rooms[code].players.length === 0) delete rooms[code];
+        }
     });
 });
 
