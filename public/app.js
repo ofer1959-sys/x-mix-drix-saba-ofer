@@ -2,6 +2,7 @@ const socket = io();
 
 const screens = {
     lobby: document.getElementById('lobby'),
+    invite: document.getElementById('inviteJoinScreen'),
     waiting: document.getElementById('waitingScreen'),
     game: document.getElementById('gameScreen')
 };
@@ -10,20 +11,24 @@ let mySymbol = '';
 let currentRoomCode = '';
 let roomData = null;
 
-// פונקציה שבודקת אם הגענו מקישור הזמנה שמכיל קוד חדר
+// זיהוי אוטומטי של הזמנה מהקישור
 window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const roomFromUrl = urlParams.get('room');
+    
     if (roomFromUrl) {
-        document.getElementById('roomCodeInput').value = roomFromUrl;
-        // מתמקד אוטומטית על שדה השם כדי שיהיה נוח ישר להקליד
-        document.getElementById('playerName').focus();
+        currentRoomCode = roomFromUrl.toUpperCase();
+        document.getElementById('invitedRoomDisplay').innerText = currentRoomCode;
+        // מציג את מסך ההזמנה ומסתיר את הלובי
+        showScreen('invite');
     }
 });
 
 function showScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
-    screens[screenName].classList.add('active');
+    if (screens[screenName]) {
+        screens[screenName].classList.add('active');
+    }
 }
 
 function playDynamicAudio(name) {
@@ -35,21 +40,36 @@ function playDynamicAudio(name) {
     }
 }
 
+// שחקן 1 יוצר חדר
 document.getElementById('createBtn').addEventListener('click', () => {
     const name = document.getElementById('playerName').value.trim() || 'שחקן 1';
     socket.emit('createRoom', name);
 });
 
+// שחקן 2 מצטרף ידנית (הקלדה)
 document.getElementById('joinBtn').addEventListener('click', () => {
     const name = document.getElementById('playerName').value.trim() || 'שחקן 2';
     const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-    if (code) socket.emit('joinRoom', { roomCode: code, playerName: name });
+    if (code) {
+        currentRoomCode = code;
+        socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
+    }
+});
+
+// שחקן 2 מצטרף דרך קישור הזמנה (זה הכפתור שתיקנו)
+document.getElementById('inviteJoinBtn').addEventListener('click', () => {
+    const name = document.getElementById('invitePlayerName').value.trim() || 'אורח';
+    if (currentRoomCode) {
+        console.log("מנסה להצטרף לחדר:", currentRoomCode);
+        socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
+    } else {
+        alert("חסר קוד חדר. אנא נסה להיכנס שוב דרך הקישור.");
+    }
 });
 
 document.getElementById('inviteWhatsAppBtn').addEventListener('click', () => {
-    // יצירת הקישור החכם שמכיל את קוד החדר בתוכו
     const gameUrl = `${window.location.origin}?room=${currentRoomCode}`;
-    const msg = `בוא לשחק איתי איקס מיקס דריקס של סבא עופר! 🎮\nהיכנס לקישור והצטרף אוטומטית לחדר:\n${gameUrl}`;
+    const msg = `בוא לשחק איתי איקס מיקס דריקס של סבא עופר! 🎮\nהיכנס לקישור כדי להצטרף אלי:\n${gameUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
 });
 
@@ -64,7 +84,7 @@ socket.on('roomJoined', ({ roomCode, symbol }) => {
     mySymbol = symbol;
     currentRoomCode = roomCode;
     document.getElementById('displayRoomCode').innerText = roomCode;
-    // ניקוי שורת הכתובת כדי שתיראה נקייה אחרי ההצטרפות
+    // מנקה את הקישור למעלה כדי שלא יציק
     window.history.replaceState({}, document.title, window.location.pathname);
     showScreen('game');
 });
@@ -163,6 +183,7 @@ socket.on('roundEnded', ({ room, winnerName }) => {
     }
 });
 
+// סיום משחק ושיתוף
 document.getElementById('endGameBtn').addEventListener('click', () => {
     if (!roomData || roomData.players.length < 2) return;
     
@@ -192,4 +213,10 @@ ${winnerLine}.`;
     
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     window.location.reload();
+});
+
+// טיפול בשגיאות מהשרת (למשל חדר מלא)
+socket.on('errorMsg', (msg) => {
+    alert(msg);
+    window.location.search = ""; // מחזיר ללובי הראשי
 });
