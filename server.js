@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
     socket.on('draw', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
-            room.draws += 1;
+            room.draws = (room.draws || 0) + 1;
             room.board = Array(9).fill('');
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
         }
