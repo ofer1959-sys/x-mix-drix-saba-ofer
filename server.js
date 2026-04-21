@@ -7,7 +7,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// הנה השורה שתוקנה - עכשיו השרת יודע בדיוק איפה התיקייה
 app.use(express.static(path.join(__dirname, 'public')));
 
 const rooms = {};
@@ -19,6 +18,7 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
             turn: 'X',
+            draws: 0,
             startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
             date: new Date().toLocaleDateString('he-IL')
         };
@@ -63,6 +63,7 @@ io.on('connection', (socket) => {
     socket.on('draw', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
+            room.draws += 1;
             room.board = Array(9).fill('');
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
         }
