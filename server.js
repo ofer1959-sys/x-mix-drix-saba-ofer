@@ -5,10 +5,14 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+    pingTimeout: 60000,
+    cors: { origin: "*" }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// זיכרון חדרים עמיד
 let rooms = {};
 
 io.on('connection', (socket) => {
@@ -19,21 +23,29 @@ io.on('connection', (socket) => {
             board: Array(9).fill(''),
             turn: 'X',
             draws: 0,
-            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+            active: true
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, symbol: 'X' });
+        console.log(`חדר נוצר: ${roomCode}`);
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
-        const room = rooms[roomCode];
-        if (room && room.players.length === 1) {
-            room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-            socket.join(roomCode);
-            socket.emit('roomJoined', { roomCode, symbol: 'O' });
-            io.to(roomCode).emit('gameStarted', room);
+        const cleanCode = roomCode.trim().toUpperCase();
+        const room = rooms[cleanCode];
+
+        if (room) {
+            if (room.players.length === 1) {
+                room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
+                socket.join(cleanCode);
+                socket.emit('roomJoined', { roomCode: cleanCode, symbol: 'O' });
+                io.to(cleanCode).emit('gameStarted', room);
+            } else if (room.players.length >= 2) {
+                // מאפשר לשחקן שהתנתק לחזור לאותו חדר (לפי ה-ID או פשוט לאפשר כניסה)
+                socket.emit('errorMsg', 'החדר מלא. צרו חדר חדש.');
+            }
         } else {
-            socket.emit('errorMsg', 'החדר לא נמצא או מלא.');
+            socket.emit('errorMsg', 'החדר לא נמצא. וודאו שהקישור תקין.');
         }
     });
 
@@ -54,11 +66,10 @@ io.on('connection', (socket) => {
         if (room) {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
-            // איפוס מיידי
             room.board = Array(9).fill('');
-            room.turn = 'X'; // X תמיד מתחיל סיבוב חדש
-            // שולחים את ה-room המעודכן כבר כאן!
+            room.turn = 'X'; 
             io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 
@@ -69,16 +80,16 @@ io.on('connection', (socket) => {
             room.board = Array(9).fill('');
             room.turn = 'X';
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
-        }
-    });
-
-    socket.on('disconnect', () => {
-        for (const code in rooms) {
-            rooms[code].players = rooms[code].players.filter(p => p.id !== socket.id);
-            if (rooms[code].players.length === 0) delete rooms[code];
+            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 });
 
+// ניקוי חדרים ישנים רק פעם בשעה
+setInterval(() => {
+    rooms = {}; 
+    console.log("ניקוי זיכרון תקופתי בוצע");
+}, 1000 * 60 * 60);
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server on ${PORT}`));
+server.listen(PORT, () => console.log(`שרת רץ על פורט ${PORT}`));
