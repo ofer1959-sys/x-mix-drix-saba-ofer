@@ -9,48 +9,58 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+    <header class="main-header">
+        <h1>⭕ איקס מיקס דריקס של סבא עופר ❌</h1>
+        <div class="game-illustration">🎮✨🎲</div>
+    </header>
+
     <div id="lobby" class="screen active">
-        <h1>🎮 איקס מיקס דריקס!</h1>
         <div class="card">
-            <input type="text" id="playerName" placeholder="השם שלך (למשל: סבא עופר)" autocomplete="off">
+            <input type="text" id="playerName" placeholder="איך קוראים לך?" autocomplete="off">
             <button id="createBtn" class="btn-primary">צור משחק חדש</button>
             <hr>
             <input type="text" id="roomCodeInput" placeholder="הכנס קוד חדר" autocomplete="off">
-            <button id="joinBtn" class="btn-secondary">הצטרף למשחק קיים</button>
+            <button id="joinBtn" class="btn-secondary">הצטרף למשחק</button>
         </div>
     </div>
 
     <div id="inviteJoinScreen" class="screen">
-        <h1>🎮 הוזמנת למשחק!</h1>
         <div class="card">
-            <p>מישהו מחכה לך בחדר: <strong id="invitedRoomDisplay"></strong></p>
-            <input type="text" id="invitePlayerName" placeholder="איך קוראים לך?" autocomplete="off">
+            <p>מחכים לך בחדר: <strong id="invitedRoomDisplay"></strong></p>
+            <input type="text" id="invitePlayerName" placeholder="השם שלך?" autocomplete="off">
             <button id="inviteJoinBtn" class="btn-primary">היכנס למשחק</button>
         </div>
     </div>
 
     <div id="waitingScreen" class="screen">
-        <h2>קוד החדר: <span id="inviteCode" class="highlight"></span></h2>
-        <p>שלח את הקישור לשחקן השני:</p>
-        <button id="inviteWhatsAppBtn" class="btn-whatsapp">הזמן בוואטסאפ 💬</button>
-        <div class="loader">ממתין להצטרפות...</div>
+        <div class="card">
+            <h2>קוד חדר: <span id="inviteCode" class="highlight"></span></h2>
+            <p>שלח את הקישור לנכד/ה:</p>
+            <button id="inviteWhatsAppBtn" class="btn-whatsapp">שלח בוואטסאפ 💬</button>
+            <div class="loader">ממתין להצטרפות...</div>
+        </div>
     </div>
 
     <div id="gameScreen" class="screen">
-        <div class="header">
-            <h2>חדר: <span id="displayRoomCode"></span></h2>
-        </div>
-        <h3 id="turnIndicator">מתחילים!</h3>
+        <h3 id="turnIndicator">טוען...</h3>
         <div class="board" id="board">
             <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
             <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
             <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
         </div>
         <div class="scoreboard">
-            <p>🏆 מאזן ניצחונות 🏆</p>
             <h3 id="scoreText">0 - 0</h3>
         </div>
-        <button id="endGameBtn" class="btn-end">סיום משחק ושיתוף תוצאה</button>
+        <button id="requestEndBtn" class="btn-end">סיום התחרות וסיכום תוצאות</button>
+    </div>
+
+    <div id="resultsScreen" class="screen">
+        <div class="card final-card">
+            <h2>🏆 סיכום התחרות 🏆</h2>
+            <div id="finalStats"></div>
+            <button id="finalWhatsAppBtn" class="btn-whatsapp">שתף תוצאות בוואטסאפ 💬</button>
+            <button onclick="location.reload()" class="btn-secondary">משחק חדש</button>
+        </div>
     </div>
 
     <div id="winPopup" class="popup hidden">
