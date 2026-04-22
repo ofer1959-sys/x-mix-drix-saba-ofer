@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
             socket.emit('roomJoined', { roomCode });
             io.to(roomCode).emit('gameStarted', room);
         } else {
-            socket.emit('errorMsg', 'חדר לא נמצא או מלא');
+            socket.emit('errorMsg', 'החדר לא נמצא או כבר מלא.');
         }
     });
 
@@ -71,7 +71,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // סיום משחק מסונכרן לשני הצדדים
     socket.on('requestEndGame', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
@@ -83,4 +82,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running`));
