@@ -36,11 +36,31 @@ document.getElementById('inviteJoinBtn').onclick = () => {
     socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
 };
 
+// סיום התחרות (המסך הסופי)
 socket.on('gameOver', ({ room, endTime }) => {
     roomData = room;
     const p1 = room.players[0], p2 = room.players[1];
     const winText = p1.score > p2.score ? `המנצח הוא: ${p1.name}` : p2.score > p1.score ? `המנצחת היא: ${p2.name}` : "תיקו - שנינו ניצחנו!";
     
+    // --- חגיגת סיום: אודיו והמון זיקוקים ---
+    if ('speechSynthesis' in window) {
+        const ut = new SpeechSynthesisUtterance(`סיום התחרות! ${winText}`);
+        ut.lang = 'he-IL'; 
+        window.speechSynthesis.speak(ut);
+    }
+
+    // מופע זיקוקים מתמשך מצידי המסך למשך 4 שניות
+    const duration = 4000;
+    const end = Date.now() + duration;
+    (function frame() {
+        confetti({ particleCount: 8, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 9999 });
+        confetti({ particleCount: 8, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 9999 });
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+    // ----------------------------------------
+
     const statsHtml = `
         <p>📅 תאריך: ${room.startDate}</p>
         <p>⏰ זמן: ${room.startTime} - ${endTime}</p>
@@ -95,21 +115,23 @@ function updateUI() {
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = () => {
         const idx = cell.getAttribute('data-index');
-        // שולח את המהלך לשרת אם זה התור שלי והמשבצת ריקה
         if (roomData && roomData.turn === mySymbol && roomData.board[idx] === '') {
             socket.emit('makeMove', { roomCode: currentRoomCode, index: parseInt(idx) });
         }
     };
 });
 
+// סיום סיבוב בודד
 socket.on('roundEnded', ({ room, winnerName }) => {
     roomData = room; 
-    updateUI(); // מעדכן את הלוח שיראו את מצב הניצחון הסופי
+    updateUI(); 
     
     if (winnerName) {
         document.getElementById('winMessage').innerText = `כל הכבוד ${winnerName}!`;
         document.getElementById('winPopup').classList.remove('hidden');
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        
+        // מכת זיקוקים גדולה יותר לכל ניצחון
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 }, zIndex: 9999 });
         
         if ('speechSynthesis' in window) {
             const ut = new SpeechSynthesisUtterance(`כל הכבוד ${winnerName}`);
@@ -118,7 +140,6 @@ socket.on('roundEnded', ({ room, winnerName }) => {
         }
         setTimeout(() => {
             document.getElementById('winPopup').classList.add('hidden');
-            // רענון הלוח לסיבוב הבא קורה אוטומטית כי השרת כבר איפס את room.board
             updateUI(); 
         }, 3500);
     } else { 
