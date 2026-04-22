@@ -3,7 +3,7 @@ let mySymbol = '';
 let currentRoomCode = '';
 let roomData = null;
 
-// תיקון אודיו לאייפון: "פתיחת" האודיו בלחיצה הראשונה של המשתמש
+// הפעלת אודיו למכשירי אפל
 function unlockAudio() {
     if ('speechSynthesis' in window) {
         const msg = new SpeechSynthesisUtterance('');
@@ -26,49 +26,37 @@ function showScreen(name) {
 
 document.getElementById('createBtn').onclick = () => {
     unlockAudio();
-    const name = document.getElementById('playerName').value || 'סבא עופר';
+    const name = document.getElementById('playerName').value.trim() || 'סבא עופר';
     socket.emit('createRoom', name);
 };
 
 document.getElementById('inviteJoinBtn').onclick = () => {
     unlockAudio();
-    const name = document.getElementById('invitePlayerName').value || 'אורח/ת';
+    const name = document.getElementById('invitePlayerName').value.trim() || 'אורח/ת';
     socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
 };
 
-// קבלת תוצאות סופיות לשני השחקנים
 socket.on('gameOver', ({ room, endTime }) => {
     roomData = room;
     const p1 = room.players[0], p2 = room.players[1];
-    const total = p1.score + p2.score + room.draws;
-    let winLine = p1.score > p2.score ? `המנצח: ${p1.name}` : p2.score > p1.score ? `המנצחת: ${p2.name}` : "התוצאה: תיקו - כולנו נהנינו!";
-
-    const resultsHtml = `
-        <p>תאריך: ${room.startDate}</p>
-        <p>זמן: ${room.startTime} - ${endTime}</p>
-        <hr>
-        <p><strong>${p1.name}:</strong> ${p1.score} ניצחונות</p>
-        <p><strong>${p2.name}:</strong> ${p2.score} ניצחונות</p>
-        <p><strong>תיקו:</strong> ${room.draws}</p>
-        <hr>
-        <h3>${winLine}</h3>
-    `;
-    document.getElementById('finalStats').innerHTML = resultsHtml;
+    const winText = p1.score > p2.score ? `המנצח הוא: ${p1.name}` : p2.score > p1.score ? `המנצחת היא: ${p2.name}` : "תיקו - שנינו ניצחנו!";
     
-    // הגדרת כפתור הווטסאפ עם הנוסח המלא
+    const statsHtml = `
+        <p>📅 תאריך: ${room.startDate}</p>
+        <p>⏰ זמן: ${room.startTime} - ${endTime}</p>
+        <hr>
+        <p>${p1.name}: ${p1.score}</p>
+        <p>${p2.name}: ${p2.score}</p>
+        <p>תיקו: ${room.draws}</p>
+        <hr>
+        <h3>${winText}</h3>
+    `;
+    document.getElementById('finalStats').innerHTML = statsHtml;
+    
     document.getElementById('finalWhatsAppBtn').onclick = () => {
-        const msg = `🎮 סיכום איקס מיקס דריקס של סבא עופר!\n` +
-                    `📅 תאריך: ${room.startDate}\n` +
-                    `⏰ שעות: ${room.startTime} - ${endTime}\n` +
-                    `-------------------\n` +
-                    `🏆 ${p1.name}: ${p1.score}\n` +
-                    `🏆 ${p2.name}: ${p2.score}\n` +
-                    `🤝 תיקו: ${room.draws}\n` +
-                    `-------------------\n` +
-                    `${winLine}. ✨`;
+        const msg = `🎮 סיכום תחרות איקס מיקס דריקס!\n📅 תאריך: ${room.startDate}\n⏰ שעות: ${room.startTime} - ${endTime}\n🏆 ${p1.name}: ${p1.score}\n🏆 ${p2.name}: ${p2.score}\n🤝 תיקו: ${room.draws}\n\n${winText} ✨`;
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     };
-    
     showScreen('results');
 });
 
@@ -76,7 +64,6 @@ document.getElementById('requestEndBtn').onclick = () => {
     socket.emit('requestEndGame', currentRoomCode);
 };
 
-// שאר הפונקציות (updateUI, makeMove וכו') נשארות כפי שהיו
 socket.on('roomCreated', (data) => { mySymbol = 'X'; currentRoomCode = data.roomCode; document.getElementById('inviteCode').innerText = currentRoomCode; showScreen('waiting'); });
 socket.on('roomJoined', (data) => { mySymbol = 'O'; currentRoomCode = data.roomCode; showScreen('game'); });
 socket.on('gameStarted', (room) => { roomData = room; showScreen('game'); updateUI(); });
@@ -89,20 +76,26 @@ function updateUI() {
         cell.innerText = val;
         cell.className = `cell ${val ? val.toLowerCase() : ''}`;
     });
+    
     const turnInd = document.getElementById('turnIndicator');
     if (roomData.turn === mySymbol) {
         turnInd.innerText = "תורך!"; turnInd.style.color = "#2ecc71";
     } else {
         const other = roomData.players.find(p => p.symbol !== mySymbol);
-        turnInd.innerText = `התור של ${other ? other.name : 'השני'}...`; turnInd.style.color = "#95a5a6";
+        turnInd.innerText = `התור של ${other ? other.name : 'השחקן השני'}...`; 
+        turnInd.style.color = "#95a5a6";
     }
+    
     const p1 = roomData.players[0], p2 = roomData.players[1];
-    if (p1 && p2) document.getElementById('scoreText').innerText = `${p1.name} ${p1.score} - ${p2.score} ${p2.name}`;
+    if (p1 && p2) {
+        document.getElementById('scoreText').innerText = `${p1.name} ${p1.score} - ${p2.score} ${p2.name}`;
+    }
 }
 
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = () => {
         const idx = cell.getAttribute('data-index');
+        // שולח את המהלך לשרת אם זה התור שלי והמשבצת ריקה
         if (roomData && roomData.turn === mySymbol && roomData.board[idx] === '') {
             socket.emit('makeMove', { roomCode: currentRoomCode, index: parseInt(idx) });
         }
@@ -110,25 +103,42 @@ document.querySelectorAll('.cell').forEach(cell => {
 });
 
 socket.on('roundEnded', ({ room, winnerName }) => {
-    roomData = room; updateUI();
+    roomData = room; 
+    updateUI(); // מעדכן את הלוח שיראו את מצב הניצחון הסופי
+    
     if (winnerName) {
         document.getElementById('winMessage').innerText = `כל הכבוד ${winnerName}!`;
         document.getElementById('winPopup').classList.remove('hidden');
-        confetti({ particleCount: 150, spread: 70 });
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        
         if ('speechSynthesis' in window) {
             const ut = new SpeechSynthesisUtterance(`כל הכבוד ${winnerName}`);
-            ut.lang = 'he-IL'; window.speechSynthesis.speak(ut);
+            ut.lang = 'he-IL'; 
+            window.speechSynthesis.speak(ut);
         }
-        setTimeout(() => document.getElementById('winPopup').classList.add('hidden'), 3000);
-    } else { alert("תיקו!"); }
+        setTimeout(() => {
+            document.getElementById('winPopup').classList.add('hidden');
+            // רענון הלוח לסיבוב הבא קורה אוטומטית כי השרת כבר איפס את room.board
+            updateUI(); 
+        }, 3500);
+    } else { 
+        alert("תיקו! מנקים את הלוח..."); 
+        updateUI();
+    }
 });
 
 socket.on('errorMsg', (m) => alert(m));
+
 window.addEventListener('load', () => {
     const p = new URLSearchParams(window.location.search);
     const r = p.get('room');
-    if (r) { currentRoomCode = r.toUpperCase(); document.getElementById('invitedRoomDisplay').innerText = currentRoomCode; showScreen('invite'); }
+    if (r) { 
+        currentRoomCode = r.toUpperCase(); 
+        document.getElementById('invitedRoomDisplay').innerText = currentRoomCode; 
+        showScreen('invite'); 
+    }
 });
+
 document.getElementById('inviteWhatsAppBtn').onclick = () => {
     const url = `${window.location.origin}?room=${currentRoomCode}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('בוא לשחק איתי! ' + url)}`);
