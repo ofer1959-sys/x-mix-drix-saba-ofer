@@ -18,12 +18,12 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
             turn: 'X',
-            firstPlayerOfRound: 'X', // זוכר מי התחיל את הסיבוב הנוכחי
             draws: 0,
-            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            startDate: new Date().toLocaleDateString('he-IL')
         };
         socket.join(roomCode);
-        socket.emit('roomCreated', { roomCode, symbol: 'X' });
+        socket.emit('roomCreated', { roomCode });
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
         if (room && room.players.length === 1) {
             room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
             socket.join(roomCode);
-            socket.emit('roomJoined', { roomCode, symbol: 'O' });
+            socket.emit('roomJoined', { roomCode });
             io.to(roomCode).emit('gameStarted', room);
         } else {
             socket.emit('errorMsg', 'חדר לא נמצא או מלא');
@@ -40,7 +40,7 @@ io.on('connection', (socket) => {
 
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '' && room.turn) {
+        if (room && room.board[index] === '') {
             const player = room.players.find(p => p.id === socket.id);
             if (player && player.symbol === room.turn) {
                 room.board[index] = player.symbol;
@@ -55,14 +55,9 @@ io.on('connection', (socket) => {
         if (room) {
             const winner = room.players.find(p => p.symbol === symbol);
             if (winner) winner.score += 1;
-            
-            // לוגיקת החלפת המתחיל:
-            room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
-            room.turn = room.firstPlayerOfRound;
             room.board = Array(9).fill('');
-            
+            room.turn = 'X';
             io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
-            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 
@@ -70,21 +65,19 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.draws += 1;
-            
-            // גם בתיקו מחליפים את מי שמתחיל:
-            room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
-            room.turn = room.firstPlayerOfRound;
             room.board = Array(9).fill('');
-            
+            room.turn = 'X';
             io.to(roomCode).emit('roundEnded', { room, winnerName: null });
-            setTimeout(() => io.to(roomCode).emit('updateBoard', room), 500);
         }
     });
 
-    socket.on('disconnect', () => {
-        for (const code in rooms) {
-            rooms[code].players = rooms[code].players.filter(p => p.id !== socket.id);
-            if (rooms[code].players.length === 0) delete rooms[code];
+    // סיום משחק מסונכרן לשני הצדדים
+    socket.on('requestEndGame', (roomCode) => {
+        const room = rooms[roomCode];
+        if (room) {
+            const endTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+            io.to(roomCode).emit('gameOver', { room, endTime });
+            delete rooms[roomCode];
         }
     });
 });
