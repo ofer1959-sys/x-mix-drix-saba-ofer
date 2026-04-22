@@ -11,6 +11,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
+// כל האפשרויות לניצחון בלוח
+const winningCombos = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // שורות
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // עמודות
+    [0, 4, 8], [2, 4, 6]             // אלכסונים
+];
+
+function checkWin(board) {
+    for (let combo of winningCombos) {
+        const [a, b, c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return board[a]; // מחזיר 'X' או 'O'
+        }
+    }
+    return null;
+}
+
 io.on('connection', (socket) => {
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -18,6 +35,7 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
             turn: 'X',
+            firstPlayerOfRound: 'X',
             draws: 0,
             startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
             startDate: new Date().toLocaleDateString('he-IL')
@@ -27,12 +45,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('joinRoom', ({ roomCode, playerName }) => {
-        const room = rooms[roomCode];
+        const cleanCode = roomCode.trim().toUpperCase();
+        const room = rooms[cleanCode];
         if (room && room.players.length === 1) {
             room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
-            socket.join(roomCode);
-            socket.emit('roomJoined', { roomCode });
-            io.to(roomCode).emit('gameStarted', room);
+            socket.join(cleanCode);
+            socket.emit('roomJoined', { roomCode: cleanCode });
+            io.to(cleanCode).emit('gameStarted', room);
         } else {
             socket.emit('errorMsg', 'החדר לא נמצא או כבר מלא.');
         }
@@ -40,34 +59,41 @@ io.on('connection', (socket) => {
 
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '') {
+        if (room && room.board[index] === '' && room.turn) {
             const player = room.players.find(p => p.id === socket.id);
             if (player && player.symbol === room.turn) {
+                // 1. מבצעים את המהלך בלוח
                 room.board[index] = player.symbol;
-                room.turn = room.turn === 'X' ? 'O' : 'X';
-                io.to(roomCode).emit('updateBoard', room);
+
+                // 2. השופט (השרת) בודק אם יש מנצח עכשיו
+                const winnerSymbol = checkWin(room.board);
+
+                if (winnerSymbol) {
+                    // יש מנצח!
+                    const winner = room.players.find(p => p.symbol === winnerSymbol);
+                    if (winner) winner.score += 1;
+                    
+                    room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
+                    room.turn = room.firstPlayerOfRound;
+                    room.board = Array(9).fill('');
+                    
+                    io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
+                } 
+                else if (!room.board.includes('')) {
+                    // מצב של תיקו
+                    room.draws += 1;
+                    room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
+                    room.turn = room.firstPlayerOfRound;
+                    room.board = Array(9).fill('');
+                    
+                    io.to(roomCode).emit('roundEnded', { room, winnerName: null });
+                } 
+                else {
+                    // המשחק ממשיך, מעבירים תור
+                    room.turn = room.turn === 'X' ? 'O' : 'X';
+                    io.to(roomCode).emit('updateBoard', room);
+                }
             }
-        }
-    });
-
-    socket.on('playerWon', ({ roomCode, symbol }) => {
-        const room = rooms[roomCode];
-        if (room) {
-            const winner = room.players.find(p => p.symbol === symbol);
-            if (winner) winner.score += 1;
-            room.board = Array(9).fill('');
-            room.turn = 'X';
-            io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
-        }
-    });
-
-    socket.on('draw', (roomCode) => {
-        const room = rooms[roomCode];
-        if (room) {
-            room.draws += 1;
-            room.board = Array(9).fill('');
-            room.turn = 'X';
-            io.to(roomCode).emit('roundEnded', { room, winnerName: null });
         }
     });
 
