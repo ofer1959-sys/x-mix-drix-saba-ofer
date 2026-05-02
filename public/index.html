@@ -21,23 +21,35 @@
     </header>
 
     <main class="container">
-        <!-- מסך לובי משודרג -->
+        <!-- מסך לובי חדש ומעוצב -->
         <div id="lobby" class="screen active">
-            <div class="card">
-                <input type="text" id="playerName" placeholder="השם שלך (למשל סבא עופר)" autocomplete="off">
+            <div class="card colorful-card">
+                <h2>ברוכים הבאים! 👋</h2>
+                <div class="input-group">
+                    <label for="playerName">השם שלך:</label>
+                    <input type="text" id="playerName" class="input-large" placeholder="איך קוראים לך?" autocomplete="off">
+                </div>
                 
-                <div class="option-box">
-                    <h3>🌐 משחק מרחוק</h3>
-                    <button id="createBtn" class="btn-primary">צור חדר והזמן שחקן</button>
-                    <div class="separator">או</div>
-                    <input type="text" id="roomCodeInput" placeholder="הכנס קוד חדר" autocomplete="off">
-                    <button id="joinBtn" class="btn-secondary">הצטרף לחדר קיים</button>
+                <div class="action-buttons">
+                    <button id="btnChooseLocal" class="btn-colorful btn-orange">🤝 משחק באותו מכשיר</button>
+                    <button id="btnChooseRemote" class="btn-colorful btn-blue">🌍 שלח הזמנה בוואטסאפ</button>
                 </div>
 
-                <div class="option-box local-box">
-                    <h3>📱 משחק משותף (באותו מסך)</h3>
-                    <input type="text" id="localPlayer2Name" placeholder="שם השחקן השני" autocomplete="off">
-                    <button id="localPlayBtn" class="btn-local">התחל משחק משותף</button>
+                <!-- נפתח רק אם בוחרים משחק באותו מכשיר -->
+                <div id="localPlaySection" class="hidden local-box-animated">
+                    <label for="localPlayer2Name">שם השחקן השני:</label>
+                    <input type="text" id="localPlayer2Name" class="input-large" placeholder="איך קוראים לו/לה?" autocomplete="off">
+                    <button id="localPlayBtn" class="btn-colorful btn-green">🚀 התחל משחק עכשיו!</button>
+                </div>
+
+                <div class="divider">
+                    <span>או</span>
+                </div>
+
+                <div class="join-box">
+                    <h3>הוזמנתם למשחק? ✉️</h3>
+                    <input type="text" id="roomCodeInput" class="input-large" placeholder="הקלידו את שם החדר" autocomplete="off">
+                    <button id="joinBtn" class="btn-secondary">הצטרף לחדר</button>
                 </div>
             </div>
         </div>
@@ -45,7 +57,7 @@
         <div id="inviteJoinScreen" class="screen">
             <div class="card">
                 <p>מחכים לך בחדר: <strong id="invitedRoomDisplay"></strong></p>
-                <input type="text" id="invitePlayerName" placeholder="איך קוראים לך?" autocomplete="off">
+                <input type="text" id="invitePlayerName" class="input-large" placeholder="איך קוראים לך?" autocomplete="off">
                 <button id="inviteJoinBtn" class="btn-primary">היכנס למשחק</button>
             </div>
         </div>
@@ -53,7 +65,7 @@
         <div id="waitingScreen" class="screen">
             <div class="card">
                 <h2>קוד חדר: <span id="inviteCode" class="highlight"></span></h2>
-                <p>שלח את הקישור בוואטסאפ:</p>
+                <p>שלח את הקישור לנכד/ה:</p>
                 <button id="inviteWhatsAppBtn" class="btn-whatsapp">שלח הזמנה 💬</button>
                 <div class="loader">ממתין להצטרפות...</div>
             </div>
