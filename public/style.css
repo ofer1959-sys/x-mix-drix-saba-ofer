@@ -1,7 +1,7 @@
 :root {
     --primary: #4a90e2;
     --secondary: #2ecc71;
-    --bg: #f4f7f6;
+    --bg: #f0f4f8;
     --text: #2c3e50;
 }
 
@@ -16,24 +16,30 @@ body {
     background: white;
     padding: 15px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     width: 100%;
+}
+
+.game-header h1 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.8rem;
 }
 
 .header-illustration {
     display: flex;
     justify-content: center;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 .mini-grid {
     display: grid;
-    grid-template-columns: repeat(3, 20px);
-    grid-template-rows: repeat(3, 20px);
-    gap: 2px;
-    background: #ccc;
-    padding: 2px;
-    border-radius: 4px;
+    grid-template-columns: repeat(3, 25px);
+    grid-template-rows: repeat(3, 25px);
+    gap: 3px;
+    background: #bdc3c7;
+    padding: 3px;
+    border-radius: 6px;
 }
 
 .mini-grid div {
@@ -41,8 +47,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 16px;
     font-weight: bold;
+    border-radius: 3px;
 }
 
 .mini-grid .x { color: #e74c3c; }
@@ -55,31 +62,137 @@ body {
     padding: 20px;
 }
 
-.screen { display: none; width: 100%; max-width: 400px; }
+.screen { display: none; width: 100%; max-width: 450px; }
 .screen.active { display: block; }
 
 .card {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     text-align: center;
 }
 
-input {
-    width: 90%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
+/* עיצוב המסך הראשי המעודכן */
+.colorful-card {
+    border-top: 6px solid var(--primary);
 }
+
+.colorful-card h2 {
+    color: var(--text);
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    text-align: right;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #34495e;
+}
+
+.input-large {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 12px;
+    font-size: 18px;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.input-large:focus {
+    border-color: var(--primary);
+    outline: none;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-colorful {
+    width: 100%;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-colorful:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.btn-orange { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+.btn-blue { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+.btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; margin-top: 10px; }
+
+.local-box-animated {
+    margin-top: 25px;
+    padding: 20px;
+    background: #fff9f0;
+    border-radius: 12px;
+    border: 2px dashed #f39c12;
+    text-align: right;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-top: 2px solid #ecf0f1;
+    z-index: 1;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #95a5a6;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+
+.join-box {
+    background: #f0f8ff;
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px solid #baddf9;
+}
+
+.join-box h3 { margin-top: 0; color: #2980b9; }
 
 button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
@@ -87,31 +200,55 @@ button {
 }
 
 .btn-primary { background: var(--primary); color: white; }
-.btn-secondary { background: #95a5a6; color: white; }
+.btn-secondary { background: #7f8c8d; color: white; }
 .btn-whatsapp { background: #25d366; color: white; margin-top: 10px; }
-.btn-end { background: #e74c3c; color: white; margin-top: 20px; }
+.btn-end { background: #e74c3c; color: white; margin-top: 25px; }
+
+.turn-status {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
 
 .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
     margin: 20px 0;
 }
 
 .cell {
     aspect-ratio: 1;
     background: white;
-    border-radius: 10px;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 40px;
+    font-size: 50px;
     font-weight: bold;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
+.cell:active { background: #f8f9fa; }
 .cell.x { color: #e74c3c; }
 .cell.o { color: var(--primary); }
+
+.score-display {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: center;
+}
 
 .popup {
     position: fixed;
@@ -119,10 +256,13 @@ button {
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 0 50px rgba(0,0,0,0.3);
+    padding: 40px;
+    border-radius: 25px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
     z-index: 1000;
+    text-align: center;
+    border: 5px solid var(--secondary);
 }
 
-.hidden { display: none; }
+.popup h1 { margin: 0; color: var(--secondary); font-size: 2.5rem; }
+.hidden { display: none !important; }
