@@ -21,13 +21,24 @@
     </header>
 
     <main class="container">
+        <!-- מסך לובי משודרג -->
         <div id="lobby" class="screen active">
             <div class="card">
-                <input type="text" id="playerName" placeholder="איך קוראים לך?" autocomplete="off">
-                <button id="createBtn" class="btn-primary">צור משחק חדש</button>
-                <div class="separator">או</div>
-                <input type="text" id="roomCodeInput" placeholder="הכנס קוד חדר" autocomplete="off">
-                <button id="joinBtn" class="btn-secondary">הצטרף למשחק</button>
+                <input type="text" id="playerName" placeholder="השם שלך (למשל סבא עופר)" autocomplete="off">
+                
+                <div class="option-box">
+                    <h3>🌐 משחק מרחוק</h3>
+                    <button id="createBtn" class="btn-primary">צור חדר והזמן שחקן</button>
+                    <div class="separator">או</div>
+                    <input type="text" id="roomCodeInput" placeholder="הכנס קוד חדר" autocomplete="off">
+                    <button id="joinBtn" class="btn-secondary">הצטרף לחדר קיים</button>
+                </div>
+
+                <div class="option-box local-box">
+                    <h3>📱 משחק משותף (באותו מסך)</h3>
+                    <input type="text" id="localPlayer2Name" placeholder="שם השחקן השני" autocomplete="off">
+                    <button id="localPlayBtn" class="btn-local">התחל משחק משותף</button>
+                </div>
             </div>
         </div>
 
