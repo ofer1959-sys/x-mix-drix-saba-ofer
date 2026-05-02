@@ -26,10 +26,11 @@ function checkWin(board) {
 }
 
 io.on('connection', (socket) => {
-    // 1. יצירת חדר למשחק מרחוק (בוואטסאפ)
+    // 1. יצירת חדר למשחק מרחוק
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
+            roomCode: roomCode,
             isLocal: false,
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
@@ -43,12 +44,13 @@ io.on('connection', (socket) => {
         socket.emit('roomCreated', { roomCode });
     });
 
-    // 2. יצירת חדר למשחק משותף (באותו מסך) - זה מה שהיה חסר!
+    // 2. יצירת חדר למשחק משותף (באותו מסך) - התיקון בוצע כאן
     socket.on('createLocalRoom', ({ p1Name, p2Name }) => {
         const roomCode = 'LOCAL_' + Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
+            roomCode: roomCode, // <-- השורה שתיקנה הכל!
             isLocal: true,
-            hostSocket: socket.id, // שומר מי המכשיר המארח
+            hostSocket: socket.id,
             players: [
                 { id: socket.id, name: p1Name, symbol: 'X', score: 0 },
                 { id: socket.id, name: p2Name, symbol: 'O', score: 0 }
@@ -64,7 +66,6 @@ io.on('connection', (socket) => {
         socket.emit('localGameStarted', rooms[roomCode]);
     });
 
-    // הצטרפות למשחק מרחוק
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const cleanCode = roomCode.trim().toUpperCase();
         const room = rooms[cleanCode];
@@ -78,7 +79,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // מהלך במשחק
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
         if (room && room.board[index] === '') {
@@ -117,7 +117,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // סיום תחרות
     socket.on('requestEndGame', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
