@@ -1,9 +1,8 @@
 const socket = io();
-let mySymbol = '';
+let mySymbol = ''; 
 let currentRoomCode = '';
 let roomData = null;
 
-// הפעלת אודיו למכשירי אפל
 function unlockAudio() {
     if ('speechSynthesis' in window) {
         const msg = new SpeechSynthesisUtterance('');
@@ -24,42 +23,78 @@ function showScreen(name) {
     screens[name].classList.add('active');
 }
 
-document.getElementById('createBtn').onclick = () => {
+// --- לוגיקת מסך הבית החדש ---
+
+// 1. כפתור משחק באותו מכשיר - פותח את השדה לשם השחקן השני
+document.getElementById('btnChooseLocal').onclick = () => {
+    const localSection = document.getElementById('localPlaySection');
+    localSection.classList.remove('hidden');
+    // גולל קצת למטה כדי שהמשתמש יראה את השדה החדש
+    localSection.scrollIntoView({ behavior: 'smooth' });
+};
+
+// 2. כפתור שליחת הזמנה בוואטסאפ
+document.getElementById('btnChooseRemote').onclick = () => {
     unlockAudio();
     const name = document.getElementById('playerName').value.trim() || 'סבא עופר';
     socket.emit('createRoom', name);
 };
 
+// 3. כפתור התחלת משחק משותף (אחרי שהוקלד השם השני)
+document.getElementById('localPlayBtn').onclick = () => {
+    unlockAudio();
+    const p1 = document.getElementById('playerName').value.trim() || 'שחקן 1';
+    const p2 = document.getElementById('localPlayer2Name').value.trim() || 'שחקן 2';
+    socket.emit('createLocalRoom', { p1Name: p1, p2Name: p2 });
+};
+
+// 4. הצטרפות לחדר קיים (החלק התחתון)
+document.getElementById('joinBtn').onclick = () => {
+    unlockAudio();
+    const name = document.getElementById('playerName').value.trim() || 'אורח/ת';
+    const code = document.getElementById('roomCodeInput').value.trim();
+    if(code) {
+        socket.emit('joinRoom', { roomCode: code, playerName: name });
+    } else {
+        alert("נא להקליד את שם החדר.");
+    }
+};
+
+// כפתור הצטרפות למשחק מתוך קישור (מוזמן)
 document.getElementById('inviteJoinBtn').onclick = () => {
     unlockAudio();
     const name = document.getElementById('invitePlayerName').value.trim() || 'אורח/ת';
     socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
 };
 
-// סיום התחרות (המסך הסופי)
+// --- שאר ניהול המשחק ---
+
+socket.on('localGameStarted', (room) => {
+    mySymbol = 'BOTH'; 
+    currentRoomCode = room.roomCode;
+    roomData = room;
+    showScreen('game');
+    updateUI();
+});
+
 socket.on('gameOver', ({ room, endTime }) => {
     roomData = room;
     const p1 = room.players[0], p2 = room.players[1];
-    const winText = p1.score > p2.score ? `המנצח הוא: ${p1.name}` : p2.score > p1.score ? `המנצחת היא: ${p2.name}` : "תיקו - שנינו ניצחנו!";
+    const winText = p1.score > p2.score ? `המנצח/ת: ${p1.name}` : p2.score > p1.score ? `המנצח/ת: ${p2.name}` : "תיקו - שנינו ניצחנו!";
     
-    // --- חגיגת סיום: אודיו והמון זיקוקים ---
     if ('speechSynthesis' in window) {
         const ut = new SpeechSynthesisUtterance(`סיום התחרות! ${winText}`);
         ut.lang = 'he-IL'; 
         window.speechSynthesis.speak(ut);
     }
 
-    // מופע זיקוקים מתמשך מצידי המסך למשך 4 שניות
     const duration = 4000;
     const end = Date.now() + duration;
     (function frame() {
         confetti({ particleCount: 8, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 9999 });
         confetti({ particleCount: 8, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 9999 });
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
+        if (Date.now() < end) requestAnimationFrame(frame);
     }());
-    // ----------------------------------------
 
     const statsHtml = `
         <p>📅 תאריך: ${room.startDate}</p>
@@ -91,6 +126,7 @@ socket.on('updateBoard', (room) => { roomData = room; updateUI(); });
 
 function updateUI() {
     if (!roomData) return;
+    
     roomData.board.forEach((val, i) => {
         const cell = document.querySelector(`.cell[data-index="${i}"]`);
         cell.innerText = val;
@@ -98,12 +134,18 @@ function updateUI() {
     });
     
     const turnInd = document.getElementById('turnIndicator');
-    if (roomData.turn === mySymbol) {
-        turnInd.innerText = "תורך!"; turnInd.style.color = "#2ecc71";
+    const currentPlayer = roomData.players.find(p => p.symbol === roomData.turn);
+
+    if (mySymbol === 'BOTH') {
+        turnInd.innerText = `תור: ${currentPlayer.name}`;
+        turnInd.style.color = roomData.turn === 'X' ? '#e74c3c' : 'var(--primary)';
     } else {
-        const other = roomData.players.find(p => p.symbol !== mySymbol);
-        turnInd.innerText = `התור של ${other ? other.name : 'השחקן השני'}...`; 
-        turnInd.style.color = "#95a5a6";
+        if (roomData.turn === mySymbol) {
+            turnInd.innerText = "תורך!"; turnInd.style.color = "#2ecc71";
+        } else {
+            turnInd.innerText = `התור של ${currentPlayer ? currentPlayer.name : 'השחקן השני'}...`; 
+            turnInd.style.color = "#95a5a6";
+        }
     }
     
     const p1 = roomData.players[0], p2 = roomData.players[1];
@@ -115,13 +157,14 @@ function updateUI() {
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = () => {
         const idx = cell.getAttribute('data-index');
-        if (roomData && roomData.turn === mySymbol && roomData.board[idx] === '') {
-            socket.emit('makeMove', { roomCode: currentRoomCode, index: parseInt(idx) });
+        if (roomData && roomData.board[idx] === '') {
+            if (mySymbol === 'BOTH' || roomData.turn === mySymbol) {
+                socket.emit('makeMove', { roomCode: currentRoomCode, index: parseInt(idx) });
+            }
         }
     };
 });
 
-// סיום סיבוב בודד
 socket.on('roundEnded', ({ room, winnerName }) => {
     roomData = room; 
     updateUI(); 
@@ -129,8 +172,6 @@ socket.on('roundEnded', ({ room, winnerName }) => {
     if (winnerName) {
         document.getElementById('winMessage').innerText = `כל הכבוד ${winnerName}!`;
         document.getElementById('winPopup').classList.remove('hidden');
-        
-        // מכת זיקוקים גדולה יותר לכל ניצחון
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 }, zIndex: 9999 });
         
         if ('speechSynthesis' in window) {
