@@ -11,27 +11,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// כל האפשרויות לניצחון בלוח
 const winningCombos = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // שורות
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // עמודות
-    [0, 4, 8], [2, 4, 6]             // אלכסונים
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+    [0, 4, 8], [2, 4, 6]             
 ];
 
 function checkWin(board) {
     for (let combo of winningCombos) {
         const [a, b, c] = combo;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-            return board[a]; // מחזיר 'X' או 'O'
-        }
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
     }
     return null;
 }
 
 io.on('connection', (socket) => {
+    // 1. יצירת חדר למשחק מרחוק (בוואטסאפ)
     socket.on('createRoom', (playerName) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
+            isLocal: false,
             players: [{ id: socket.id, name: playerName, symbol: 'X', score: 0 }],
             board: Array(9).fill(''),
             turn: 'X',
@@ -44,10 +43,32 @@ io.on('connection', (socket) => {
         socket.emit('roomCreated', { roomCode });
     });
 
+    // 2. יצירת חדר למשחק משותף (באותו מסך) - זה מה שהיה חסר!
+    socket.on('createLocalRoom', ({ p1Name, p2Name }) => {
+        const roomCode = 'LOCAL_' + Math.random().toString(36).substring(2, 6).toUpperCase();
+        rooms[roomCode] = {
+            isLocal: true,
+            hostSocket: socket.id, // שומר מי המכשיר המארח
+            players: [
+                { id: socket.id, name: p1Name, symbol: 'X', score: 0 },
+                { id: socket.id, name: p2Name, symbol: 'O', score: 0 }
+            ],
+            board: Array(9).fill(''),
+            turn: 'X',
+            firstPlayerOfRound: 'X',
+            draws: 0,
+            startTime: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            startDate: new Date().toLocaleDateString('he-IL')
+        };
+        socket.join(roomCode);
+        socket.emit('localGameStarted', rooms[roomCode]);
+    });
+
+    // הצטרפות למשחק מרחוק
     socket.on('joinRoom', ({ roomCode, playerName }) => {
         const cleanCode = roomCode.trim().toUpperCase();
         const room = rooms[cleanCode];
-        if (room && room.players.length === 1) {
+        if (room && room.players.length === 1 && !room.isLocal) {
             room.players.push({ id: socket.id, name: playerName, symbol: 'O', score: 0 });
             socket.join(cleanCode);
             socket.emit('roomJoined', { roomCode: cleanCode });
@@ -57,39 +78,38 @@ io.on('connection', (socket) => {
         }
     });
 
+    // מהלך במשחק
     socket.on('makeMove', ({ roomCode, index }) => {
         const room = rooms[roomCode];
-        if (room && room.board[index] === '' && room.turn) {
-            const player = room.players.find(p => p.id === socket.id);
-            if (player && player.symbol === room.turn) {
-                // 1. מבצעים את המהלך בלוח
-                room.board[index] = player.symbol;
+        if (room && room.board[index] === '') {
+            let isValid = false;
+            
+            // בודק אם מותר ללחוץ: או שזה משחק באותו מסך, או שזה באמת התור שלי מרחוק
+            if (room.isLocal && room.hostSocket === socket.id) {
+                isValid = true;
+            } else {
+                const player = room.players.find(p => p.id === socket.id);
+                if (player && player.symbol === room.turn) isValid = true;
+            }
 
-                // 2. השופט (השרת) בודק אם יש מנצח עכשיו
+            if (isValid) {
+                room.board[index] = room.turn;
                 const winnerSymbol = checkWin(room.board);
 
                 if (winnerSymbol) {
-                    // יש מנצח!
                     const winner = room.players.find(p => p.symbol === winnerSymbol);
                     if (winner) winner.score += 1;
-                    
                     room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
                     room.turn = room.firstPlayerOfRound;
                     room.board = Array(9).fill('');
-                    
                     io.to(roomCode).emit('roundEnded', { room, winnerName: winner.name });
-                } 
-                else if (!room.board.includes('')) {
-                    // מצב של תיקו
+                } else if (!room.board.includes('')) {
                     room.draws += 1;
                     room.firstPlayerOfRound = (room.firstPlayerOfRound === 'X') ? 'O' : 'X';
                     room.turn = room.firstPlayerOfRound;
                     room.board = Array(9).fill('');
-                    
                     io.to(roomCode).emit('roundEnded', { room, winnerName: null });
-                } 
-                else {
-                    // המשחק ממשיך, מעבירים תור
+                } else {
                     room.turn = room.turn === 'X' ? 'O' : 'X';
                     io.to(roomCode).emit('updateBoard', room);
                 }
@@ -97,6 +117,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    // סיום תחרות
     socket.on('requestEndGame', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
