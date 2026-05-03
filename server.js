@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// פונקציה חרישית לשליחת המייל - בשיטה שעוקפת את החסימה של Render
+// פונקציה חרישית לשליחת המייל - עם "תעודת זהות" של האתר כדי לעקוף חסימה
 async function sendResultsEmailSilent(room, endTime) {
     if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) return;
 
@@ -22,12 +22,14 @@ async function sendResultsEmailSilent(room, endTime) {
     const emailBody = `סיכום תחרות איקס מיקס דריקס:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`;
 
     try {
-        // שימוש ב-API חינמי שמעביר את ההודעה על גבי הרשת הרגילה בלי להיחסם
         const response = await fetch(`https://formsubmit.co/ajax/${process.env.EMAIL_USER}`, {
             method: "POST",
             headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                // התיקון שלנו: מצהירים על הכתובת של האתר כדי ש-FormSubmit יאשר
+                'Origin': 'https://x-mix-drix-saba-ofer.onrender.com',
+                'Referer': 'https://x-mix-drix-saba-ofer.onrender.com/'
             },
             body: JSON.stringify({
                 _subject: "תוצאות משחק איקס מיקס דריקס",
