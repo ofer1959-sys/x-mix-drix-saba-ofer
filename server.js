@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// פונקציית העזר לשליחת המייל 
+// פונקציית העזר לשליחת המייל (פועלת ברקע)
 async function sendResultsEmail(room, endTime) {
     console.log(`[מייל] מתחיל בדיקה לחדר ${room.roomCode}...`);
     
@@ -36,11 +36,12 @@ async function sendResultsEmail(room, endTime) {
     if (p1.score > p2.score) winnerName = p1.name;
     else if (p2.score > p1.score) winnerName = p2.name;
 
-    // התיקון: הגדרה מפורשת וקשוחה של שרתי גוגל
+    // התיקון: שימוש בפורט 587 שעוקף לפעמים חסימות של שרתים חינמיים
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // שימוש באבטחה מלאה
+        port: 587,
+        secure: false, // שימוש ב-TLS
+        requireTLS: true,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
@@ -80,7 +81,7 @@ async function sendResultsEmail(room, endTime) {
         room.emailSent = true;
         console.log("[מייל] ✅ נשלח בהצלחה!");
     } catch (error) {
-        console.error("[מייל] ❌ שגיאה בשליחת המייל:", error);
+        console.error("[מייל] ❌ שגיאה בשליחת המייל:", error.message);
     }
 }
 
@@ -155,23 +156,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    // התיקון: מחכים לשליחת המייל לפני מחיקת החדר (async/await)
-    socket.on('requestEndGame', async (roomCode) => {
+    // התיקון הקריטי: שולחים קודם את מסך הסיום לדפדפן, ורק אז שולחים מייל!
+    socket.on('requestEndGame', (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
             const endTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-            await sendResultsEmail(room, endTime); 
-            io.to(roomCode).emit('gameOver', { room, endTime });
+            io.to(roomCode).emit('gameOver', { room, endTime }); // זה מקפיץ את המסך מיד!
+            sendResultsEmail(room, endTime); // המייל נשלח במקביל מבלי להפריע
             delete rooms[roomCode];
         }
     });
 
-    socket.on('disconnect', async () => {
+    socket.on('disconnect', () => {
         for (const code in rooms) {
             const room = rooms[code];
             const playerIndex = room.players.findIndex(p => p.id === socket.id);
             if (playerIndex !== -1) {
-                await sendResultsEmail(room, null);
+                sendResultsEmail(room, null); 
                 delete rooms[code];
             }
         }
