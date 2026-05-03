@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// פונקציית העזר לשליחת המייל (עם דיווחים ללוגים)
+// פונקציית העזר לשליחת המייל 
 async function sendResultsEmail(room, endTime) {
     console.log(`[מייל] מתחיל בדיקה לחדר ${room.roomCode}...`);
     
@@ -36,8 +36,11 @@ async function sendResultsEmail(room, endTime) {
     if (p1.score > p2.score) winnerName = p1.name;
     else if (p2.score > p1.score) winnerName = p2.name;
 
+    // התיקון: הגדרה מפורשת וקשוחה של שרתי גוגל
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // שימוש באבטחה מלאה
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
@@ -152,22 +155,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('requestEndGame', (roomCode) => {
+    // התיקון: מחכים לשליחת המייל לפני מחיקת החדר (async/await)
+    socket.on('requestEndGame', async (roomCode) => {
         const room = rooms[roomCode];
         if (room) {
             const endTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-            sendResultsEmail(room, endTime); 
+            await sendResultsEmail(room, endTime); 
             io.to(roomCode).emit('gameOver', { room, endTime });
             delete rooms[roomCode];
         }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
         for (const code in rooms) {
             const room = rooms[code];
             const playerIndex = room.players.findIndex(p => p.id === socket.id);
             if (playerIndex !== -1) {
-                sendResultsEmail(room, null);
+                await sendResultsEmail(room, null);
                 delete rooms[code];
             }
         }
