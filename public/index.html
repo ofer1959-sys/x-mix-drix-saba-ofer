@@ -9,92 +9,87 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <header class="game-header">
+    <header class="main-game-header">
         <h1>איקס מיקס דריקס של סבא עופר</h1>
-        <div class="header-illustration">
-            <div class="mini-grid">
-                <div></div><div class="x">X</div><div></div>
-                <div></div><div class="o">O</div><div></div>
-                <div></div><div></div><div></div>
+        <div class="header-graphic">
+            <div class="mini-board-icon">
+                <div class="m-cell"></div><div class="m-cell x-color">X</div><div class="m-cell"></div>
+                <div class="m-cell"></div><div class="m-cell o-color">O</div><div class="m-cell"></div>
+                <div class="m-cell"></div><div class="m-cell"></div><div class="m-cell"></div>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <!-- מסך לובי חדש ומעוצב -->
+    <main class="content-wrapper">
         <div id="lobby" class="screen active">
-            <div class="card colorful-card">
-                <h2>ברוכים הבאים! 👋</h2>
-                <div class="input-group">
-                    <label for="playerName">השם שלך:</label>
-                    <input type="text" id="playerName" class="input-large" placeholder="איך קוראים לך?" autocomplete="off">
-                </div>
-                
-                <div class="action-buttons">
-                    <button id="btnChooseLocal" class="btn-colorful btn-orange">🤝 משחק באותו מכשיר</button>
-                    <button id="btnChooseRemote" class="btn-colorful btn-blue">🌍 שלח הזמנה בוואטסאפ</button>
+            <div class="card lobby-card">
+                <div class="user-intro">
+                    <label>איך קוראים לך?</label>
+                    <input type="text" id="playerName" class="styled-input" placeholder="למשל: סבא עופר" autocomplete="off">
                 </div>
 
-                <!-- נפתח רק אם בוחרים משחק באותו מכשיר -->
-                <div id="localPlaySection" class="hidden local-box-animated">
-                    <label for="localPlayer2Name">שם השחקן השני:</label>
-                    <input type="text" id="localPlayer2Name" class="input-large" placeholder="איך קוראים לו/לה?" autocomplete="off">
-                    <button id="localPlayBtn" class="btn-colorful btn-green">🚀 התחל משחק עכשיו!</button>
+                <div class="main-actions">
+                    <button id="btnChooseLocal" class="action-btn local-style">📱 משחק באותו מכשיר</button>
+                    <button id="btnChooseRemote" class="action-btn remote-style">💬 שלח הזמנה בוואטסאפ</button>
                 </div>
 
-                <div class="divider">
-                    <span>או</span>
+                <div id="localPlaySection" class="hidden-section">
+                    <label>שם השחקן השני:</label>
+                    <input type="text" id="localPlayer2Name" class="styled-input" placeholder="שם הנכד/ה" autocomplete="off">
+                    <button id="localPlayBtn" class="btn-start-now">🚀 התחל משחק עכשיו!</button>
                 </div>
 
-                <div class="join-box">
-                    <h3>הוזמנתם למשחק? ✉️</h3>
-                    <input type="text" id="roomCodeInput" class="input-large" placeholder="הקלידו את שם החדר" autocomplete="off">
-                    <button id="joinBtn" class="btn-secondary">הצטרף לחדר</button>
+                <div class="bottom-join">
+                    <p>הוזמנתם לחדר קיים? הכניסו את שמו:</p>
+                    <div class="join-row">
+                        <input type="text" id="roomCodeInput" class="styled-input small-input" placeholder="קוד חדר">
+                        <button id="joinBtn" class="btn-join-action">הצטרף</button>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div id="inviteJoinScreen" class="screen">
-            <div class="card">
-                <p>מחכים לך בחדר: <strong id="invitedRoomDisplay"></strong></p>
-                <input type="text" id="invitePlayerName" class="input-large" placeholder="איך קוראים לך?" autocomplete="off">
-                <button id="inviteJoinBtn" class="btn-primary">היכנס למשחק</button>
             </div>
         </div>
 
         <div id="waitingScreen" class="screen">
             <div class="card">
-                <h2>קוד חדר: <span id="inviteCode" class="highlight"></span></h2>
-                <p>שלח את הקישור לנכד/ה:</p>
-                <button id="inviteWhatsAppBtn" class="btn-whatsapp">שלח הזמנה 💬</button>
-                <div class="loader">ממתין להצטרפות...</div>
+                <h2>קוד החדר: <span id="inviteCode" class="room-highlight"></span></h2>
+                <p>שלח את הקישור בוואטסאפ:</p>
+                <button id="inviteWhatsAppBtn" class="whatsapp-send-btn">שלח הזמנה לשחק 💬</button>
+                <div class="wait-status">ממתין להצטרפות...</div>
             </div>
         </div>
 
         <div id="gameScreen" class="screen">
-            <div id="turnIndicator" class="turn-status">מתחברים...</div>
-            <div class="board" id="board">
+            <div id="turnIndicator" class="game-status-bar">מתחברים לשרת...</div>
+            <div class="board" id="gameBoard">
                 <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
                 <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
                 <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
             </div>
-            <div class="score-display">
-                <div id="scoreText">טוען תוצאות...</div>
+            <div class="footer-stats">
+                <div id="scoreText" class="current-score">סבא עופר 0 - 0 נכדים</div>
+                <button id="requestEndBtn" class="btn-finish-series">סיום התחרות וסיכום 🏁</button>
             </div>
-            <button id="requestEndBtn" class="btn-end">סיום התחרות וסיכום</button>
         </div>
 
         <div id="resultsScreen" class="screen">
-            <div class="card results-card">
+            <div class="card summary-card">
                 <h2>🏆 סיכום התחרות 🏆</h2>
-                <div id="finalStats" class="final-stats"></div>
-                <button id="finalWhatsAppBtn" class="btn-whatsapp">שתף תוצאות בוואטסאפ 💬</button>
-                <button onclick="location.reload()" class="btn-secondary">חזרה לתפריט</button>
+                <div id="finalStats" class="final-details"></div>
+                <button id="finalWhatsAppBtn" class="whatsapp-send-btn">שתף תוצאות בוואטסאפ 💬</button>
+                <button onclick="location.reload()" class="btn-restart">חזרה להתחלה</button>
+            </div>
+        </div>
+
+        <div id="inviteJoinScreen" class="screen">
+            <div class="card">
+                <p>נכד/ה יקר/ה, הוזמנת לחדר: <strong id="invitedRoomDisplay"></strong></p>
+                <input type="text" id="invitePlayerName" class="styled-input" placeholder="איך קוראים לך?">
+                <button id="inviteJoinBtn" class="action-btn remote-style">היכנס למשחק</button>
             </div>
         </div>
     </main>
 
-    <div id="winPopup" class="popup hidden">
+    <div id="winPopup" class="popup-win hidden">
         <h1 id="winMessage">כל הכבוד!</h1>
     </div>
 
