@@ -1,224 +1,144 @@
 :root {
-    --primary: #4a90e2;
-    --secondary: #2ecc71;
-    --bg: #f0f4f8;
-    --text: #2c3e50;
+    --primary: #3498db;
+    --accent: #e67e22;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --bg: #f8f9fa;
+    --card-shadow: 0 8px 30px rgba(0,0,0,0.1);
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
     background-color: var(--bg);
     margin: 0;
     direction: rtl;
+    color: #2c3e50;
 }
 
-.game-header {
+.main-game-header {
     background: white;
     padding: 15px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    width: 100%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.game-header h1 {
+.main-game-header h1 {
     margin: 0;
     color: var(--primary);
-    font-size: 1.8rem;
+    font-size: 1.6rem;
 }
 
-.header-illustration {
+.header-graphic {
     display: flex;
     justify-content: center;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
-.mini-grid {
+.mini-board-icon {
     display: grid;
-    grid-template-columns: repeat(3, 25px);
-    grid-template-rows: repeat(3, 25px);
+    grid-template-columns: repeat(3, 22px);
+    grid-template-rows: repeat(3, 22px);
     gap: 3px;
     background: #bdc3c7;
     padding: 3px;
-    border-radius: 6px;
+    border-radius: 5px;
 }
 
-.mini-grid div {
+.m-cell {
     background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
-.mini-grid .x { color: #e74c3c; }
-.mini-grid .o { color: var(--primary); }
+.x-color { color: var(--danger); }
+.o-color { color: var(--primary); }
 
-.container {
+.content-wrapper {
+    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
 }
 
-.screen { display: none; width: 100%; max-width: 450px; }
+.screen { display: none; width: 100%; max-width: 420px; }
 .screen.active { display: block; }
 
 .card {
     background: white;
-    padding: 30px;
+    padding: 25px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-shadow: var(--card-shadow);
     text-align: center;
 }
 
-/* עיצוב המסך הראשי המעודכן */
-.colorful-card {
-    border-top: 6px solid var(--primary);
-}
-
-.colorful-card h2 {
-    color: var(--text);
-    margin-top: 0;
-    margin-bottom: 25px;
-}
-
-.input-group label {
-    display: block;
-    text-align: right;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #34495e;
-}
-
-.input-large {
+.styled-input {
     width: 100%;
-    box-sizing: border-box;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 12px;
+    margin: 10px 0;
     border: 2px solid #ecf0f1;
     border-radius: 12px;
-    font-size: 18px;
-    background-color: #f8fafc;
-    transition: all 0.3s ease;
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
-.input-large:focus {
-    border-color: var(--primary);
-    outline: none;
-    background-color: white;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
-
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.btn-colorful {
+.action-btn {
     width: 100%;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 16px;
+    padding: 15px;
+    margin: 10px 0;
     border: none;
     border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    color: white;
+    transition: 0.2s;
 }
 
-.btn-colorful:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
+.local-style { background: linear-gradient(135deg, #f39c12, var(--accent)); }
+.remote-style { background: linear-gradient(135deg, #3498db, #2980b9); }
 
-.btn-orange { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
-.btn-blue { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
-.btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; margin-top: 10px; }
-
-.local-box-animated {
-    margin-top: 25px;
-    padding: 20px;
+.hidden-section {
+    display: none;
     background: #fff9f0;
-    border-radius: 12px;
-    border: 2px dashed #f39c12;
-    text-align: right;
-    animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-15px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.divider {
-    text-align: center;
-    margin: 30px 0;
-    position: relative;
-}
-
-.divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    border-top: 2px solid #ecf0f1;
-    z-index: 1;
-}
-
-.divider span {
-    background: white;
-    padding: 0 15px;
-    color: #95a5a6;
-    font-weight: bold;
-    position: relative;
-    z-index: 2;
-}
-
-.join-box {
-    background: #f0f8ff;
-    padding: 25px;
+    padding: 15px;
     border-radius: 15px;
-    border: 2px solid #baddf9;
+    border: 2px dashed var(--accent);
+    margin-top: 15px;
 }
 
-.join-box h3 { margin-top: 0; color: #2980b9; }
+.hidden-section.show { display: block; animation: fadeIn 0.4s; }
 
-button {
+.btn-start-now {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
+    background: var(--success);
+    color: white;
     border: none;
     border-radius: 10px;
     font-size: 18px;
-    font-weight: bold;
+    margin-top: 10px;
     cursor: pointer;
-    transition: 0.3s;
 }
 
-.btn-primary { background: var(--primary); color: white; }
-.btn-secondary { background: #7f8c8d; color: white; }
-.btn-whatsapp { background: #25d366; color: white; margin-top: 10px; }
-.btn-end { background: #e74c3c; color: white; margin-top: 25px; }
-
-.turn-status {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    text-align: center;
-    background: white;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+.bottom-join {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
+.join-row { display: flex; gap: 10px; }
+.small-input { flex: 1; margin: 0; }
+.btn-join-action { background: #7f8c8d; color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; }
+
+/* לוח המשחק */
 .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 10px;
     margin: 20px 0;
 }
 
@@ -229,40 +149,35 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 50px;
+    font-size: 45px;
     font-weight: bold;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     cursor: pointer;
-    transition: background 0.2s;
 }
 
-.cell:active { background: #f8f9fa; }
-.cell.x { color: #e74c3c; }
+.cell.x { color: var(--danger); }
 .cell.o { color: var(--primary); }
 
-.score-display {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    font-size: 18px;
+.game-status-bar {
+    font-size: 22px;
     font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
     text-align: center;
 }
 
-.popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 40px;
-    border-radius: 25px;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
-    z-index: 1000;
-    text-align: center;
-    border: 5px solid var(--secondary);
+.btn-finish-series {
+    background: var(--danger);
+    color: white;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-top: 20px;
+    cursor: pointer;
 }
 
-.popup h1 { margin: 0; color: var(--secondary); font-size: 2.5rem; }
-.hidden { display: none !important; }
+.whatsapp-send-btn { background: #25d366; color: white; width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; }
+.btn-restart { background: #95a5a6; color: white; width: 100%; padding: 10px; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
