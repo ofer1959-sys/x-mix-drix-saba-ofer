@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// פונקציה חרישית לשליחת המייל
+// פונקציה חרישית לשליחת המייל - בשיטה שעוקפת את החסימה של Render
 async function sendResultsEmailSilent(room, endTime) {
     if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) return;
 
@@ -20,23 +19,27 @@ async function sendResultsEmailSilent(room, endTime) {
     const p2 = room.players[1] || { name: 'שחקן 2', score: 0 };
     const winMsg = p1.score > p2.score ? p1.name : p2.score > p1.score ? p2.name : "תיקו";
 
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
-
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER,
-        subject: 'תוצאות משחק איקס מיקס דריקס',
-        text: `סיכום תחרות:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`
-    };
+    const emailBody = `סיכום תחרות איקס מיקס דריקס:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`;
 
     try {
-        await transporter.sendMail(mailOptions);
+        // שימוש ב-API חינמי שמעביר את ההודעה על גבי הרשת הרגילה בלי להיחסם
+        const response = await fetch(`https://formsubmit.co/ajax/${process.env.EMAIL_USER}`, {
+            method: "POST",
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                _subject: "תוצאות משחק איקס מיקס דריקס",
+                message: emailBody
+            })
+        });
+        const data = await response.json();
+        console.log("Email API response:", data);
         room.emailSent = true;
-        console.log("Email sent silently.");
-    } catch (e) { console.log("Email failed silently."); }
+    } catch (e) { 
+        console.log("Email failed via API:", e); 
+    }
 }
 
 const winningCombos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
