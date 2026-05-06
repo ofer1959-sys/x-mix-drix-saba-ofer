@@ -1,26 +1,224 @@
-/* הוסף את זה לסוף קובץ ה-CSS הקיים */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;900&display=swap');
 
+:root {
+    --x-color: #ff4757;
+    --o-color: #1e90ff;
+    --bg-gradient: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+    --primary: #3498db;
+    --orange: #ffa502;
+    --green: #2ed573;
+}
+
+body {
+    font-family: 'Rubik', sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    margin: 0;
+    direction: rtl;
+    color: #2f3542;
+    overflow-x: hidden;
+}
+
+/* כותרת עליונה */
+.game-header-3d {
+    background: white;
+    text-align: center;
+    padding: 15px;
+    border-bottom: 5px solid #dfe4ea;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 0 0 25px 25px;
+    position: relative;
+    z-index: 10;
+}
+
+.game-header-3d h1 {
+    margin: 0;
+    color: #ff6348;
+    font-size: 1.8rem;
+    text-shadow: 2px 2px 0px #feca57;
+}
+
+.header-illustration { display: flex; justify-content: center; margin-top: 10px; }
+.mini-grid-3d {
+    display: grid;
+    grid-template-columns: repeat(3, 25px);
+    grid-template-rows: repeat(3, 25px);
+    gap: 3px;
+    background: #ced6e0;
+    padding: 5px;
+    border-radius: 8px;
+}
+.m-cell { background: white; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
+.x-color { color: var(--x-color); }
+.o-color { color: var(--o-color); }
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+}
+
+/* --- ניהול מסכים: התיקון הקריטי --- */
+.screen { 
+    display: none !important; /* מסתיר הכל כברירת מחדל */
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.screen.active { 
+    display: block !important; /* מציג רק את המסך הפעיל */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* כרטיסיות */
+.card-3d {
+    background: white;
+    padding: 25px;
+    border-radius: 25px;
+    border: 4px solid #fff;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.card-yellow { border-color: #f1c40f; }
+.card-blue { border-color: #3498db; }
+.card-green { border-color: #2ecc71; }
+
+/* כפתור בית */
 .btn-home {
     position: absolute;
-    top: -15px;
-    right: -10px;
-    width: 50px;
-    height: 50px;
+    top: -10px;
+    left: -10px;
+    width: 45px;
+    height: 45px;
     background: white;
-    border: 3px solid #ffa502;
+    border: 3px solid var(--orange);
     border-radius: 50%;
-    font-size: 24px;
+    font-size: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 10;
-    transition: transform 0.2s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 100;
 }
 
-.btn-home:active {
-    transform: scale(0.9);
+/* כפתורים בולטים */
+.btn-3d {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+    transition: all 0.1s;
+}
+.btn-3d:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+
+.btn-orange { background: #f39c12; }
+.btn-blue { background: #3498db; }
+.btn-green { background: #2ecc71; margin-top: 15px; }
+.btn-red { background: #e74c3c; }
+.btn-gray { background: #95a5a6; }
+.btn-whatsapp { background: #25d366; }
+
+/* קלט */
+.input-3d {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ecf0f1;
+    border-radius: 12px;
+    font-size: 16px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    background: #f9f9f9;
 }
 
-.screen { position: relative; } /* חשוב לצורך מיקום כפתור הבית */
+/* לוח משחק */
+.board-3d {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.cell-3d {
+    aspect-ratio: 1;
+    background: white;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 900;
+    box-shadow: 0 6px 0 #dfe4ea;
+    cursor: pointer;
+    border: 2px solid #f1f2f6;
+}
+.cell-3d.x { color: var(--x-color); }
+.cell-3d.o { color: var(--o-color); }
+
+.game-status-bubble {
+    background: white;
+    padding: 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #dfe4ea;
+    margin-bottom: 20px;
+}
+
+.footer-stats-3d {
+    background: #2c3e50;
+    color: white;
+    padding: 15px;
+    border-radius: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.hidden-section {
+    display: none;
+    background: #fff9e6;
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px dashed #f1c40f;
+    margin-top: 10px;
+}
+
+.room-highlight-3d {
+    font-size: 2rem;
+    color: #e74c3c;
+    background: #fef9e7;
+    padding: 10px;
+    border-radius: 10px;
+    display: block;
+    margin: 10px 0;
+}
+
+.popup-win {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #f1c40f;
+    padding: 30px;
+    border-radius: 30px;
+    border: 5px solid #fff;
+    z-index: 2000;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+}
+
+.hidden { display: none !important; }
