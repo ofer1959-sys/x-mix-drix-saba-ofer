@@ -9,9 +9,6 @@
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <!-- רקע של צורות צפות (CSS) -->
-    <div class="floating-shapes"></div>
-
     <header class="game-header-3d">
         <h1>✨ איקס מיקס דריקס ✨</h1>
         <h2>המשחק של סבא עופר והנכדים</h2>
@@ -25,16 +22,13 @@
     </header>
 
     <main class="container">
-        <!-- מסך לובי חדש ושמח -->
         <div id="lobby" class="screen active">
             <div class="card card-3d card-yellow">
                 <h2 class="welcome-title">ברוכים הבאים! 🎈</h2>
-                
                 <div class="input-wrapper">
                     <label>איך קוראים לך?</label>
                     <input type="text" id="playerName" class="input-3d" placeholder="למשל: סבא עופר 👑" autocomplete="off">
                 </div>
-
                 <div class="action-buttons">
                     <button id="btnChooseLocal" class="btn-3d btn-orange">
                         <span class="icon">📱</span> משחק באותו מכשיר
@@ -43,18 +37,13 @@
                         <span class="icon">🌍</span> שלח הזמנה בוואטסאפ
                     </button>
                 </div>
-
-                <!-- אזור שחקן שני - נפתח בלחיצה על 'באותו מכשיר' -->
                 <div id="localPlaySection" class="hidden-section box-green">
                     <label>שם השחקן השני:</label>
                     <input type="text" id="localPlayer2Name" class="input-3d" placeholder="שם הנכד/ה 👧👦" autocomplete="off">
                     <button id="localPlayBtn" class="btn-3d btn-green">🚀 התחל משחק עכשיו!</button>
                 </div>
-
                 <div class="divider-3d"><span>או הצטרפו לחדר</span></div>
-
                 <div class="join-box-3d">
-                    <p>הוזמנתם? הקלידו כאן את קוד החדר:</p>
                     <div class="join-row">
                         <input type="text" id="roomCodeInput" class="input-3d small-input" placeholder="קוד חדר 🔑">
                         <button id="joinBtn" class="btn-3d btn-gray">היכנס 🎯</button>
@@ -63,47 +52,42 @@
             </div>
         </div>
 
-        <!-- מסך המתנה -->
         <div id="waitingScreen" class="screen">
+            <button class="btn-home">🏠</button>
             <div class="card card-3d card-blue">
                 <h2>קוד החדר שלכם: <br><span id="inviteCode" class="room-highlight-3d"></span></h2>
-                <div class="waiting-illustration">⏳</div>
                 <p>שלחו את הקישור לנכד/ה:</p>
                 <button id="inviteWhatsAppBtn" class="btn-3d btn-whatsapp">שלח הזמנה בוואטסאפ 💬</button>
                 <div class="wait-status">מחכים שהשחקן השני יכנס...</div>
             </div>
         </div>
 
-        <!-- מסך המשחק -->
         <div id="gameScreen" class="screen">
-            <div id="turnIndicator" class="game-status-bubble">מתחברים לשרת...</div>
-            
+            <button class="btn-home">🏠</button>
+            <div id="turnIndicator" class="game-status-bubble">מתחברים...</div>
             <div class="board-3d" id="gameBoard">
                 <div class="cell-3d" data-index="0"></div><div class="cell-3d" data-index="1"></div><div class="cell-3d" data-index="2"></div>
                 <div class="cell-3d" data-index="3"></div><div class="cell-3d" data-index="4"></div><div class="cell-3d" data-index="5"></div>
                 <div class="cell-3d" data-index="6"></div><div class="cell-3d" data-index="7"></div><div class="cell-3d" data-index="8"></div>
             </div>
-            
             <div class="footer-stats-3d">
-                <div id="scoreText" class="current-score-3d">סבא עופר 0 - 0 נכדים</div>
-                <button id="requestEndBtn" class="btn-3d btn-red" style="margin-top: 15px;">🏁 סיום התחרות וסיכום 🏁</button>
+                <div id="scoreText" class="current-score-3d">טוען...</div>
+                <button id="requestEndBtn" class="btn-3d btn-red" style="margin-top: 15px;">🏁 סיום וסיכום 🏁</button>
             </div>
         </div>
 
-        <!-- מסך תוצאות סופי -->
         <div id="resultsScreen" class="screen">
+            <button class="btn-home">🏠</button>
             <div class="card card-3d card-yellow">
                 <h2 class="results-title">🏆 סיכום התחרות 🏆</h2>
                 <div id="finalStats" class="final-details-3d"></div>
                 <button id="finalWhatsAppBtn" class="btn-3d btn-whatsapp" style="margin-top: 15px;">שתף תוצאות בוואטסאפ 💬</button>
-                <button onclick="location.reload()" class="btn-3d btn-gray" style="margin-top: 15px;">🏠 חזרה להתחלה</button>
             </div>
         </div>
 
-        <!-- מסך הצטרפות מקישור -->
         <div id="inviteJoinScreen" class="screen">
+            <button class="btn-home">🏠</button>
             <div class="card card-3d card-green">
-                <div class="waiting-illustration">👋</div>
                 <p>הוזמנתם לחדר: <strong id="invitedRoomDisplay" class="room-highlight-3d"></strong></p>
                 <input type="text" id="invitePlayerName" class="input-3d" placeholder="איך קוראים לך?">
                 <button id="inviteJoinBtn" class="btn-3d btn-blue" style="margin-top: 15px;">היכנס למשחק 🎮</button>
@@ -111,10 +95,7 @@
         </div>
     </main>
 
-    <div id="winPopup" class="popup-win hidden">
-        <h1 id="winMessage">כל הכבוד!</h1>
-    </div>
-
+    <div id="winPopup" class="popup-win hidden"><h1 id="winMessage">כל הכבוד!</h1></div>
     <script src="app.js"></script>
 </body>
 </html>
