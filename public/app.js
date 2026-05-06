@@ -3,19 +3,12 @@ let mySymbol = '';
 let currentRoomCode = '';
 let roomData = null;
 
-function unlockAudio() {
-    if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(msg);
-    }
-}
-
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 }
 
-// כפתורי בית - פשוט מרעננים את הדף
+// כפתורי בית
 document.querySelectorAll('.btn-home').forEach(btn => {
     btn.onclick = () => location.href = '/';
 });
@@ -23,45 +16,39 @@ document.querySelectorAll('.btn-home').forEach(btn => {
 // לובי
 document.getElementById('btnChooseLocal').onclick = () => {
     const section = document.getElementById('localPlaySection');
+    // הופך לנראה בצורה מפורשת
     section.style.display = (section.style.display === 'block') ? 'none' : 'block';
-    section.scrollIntoView({ behavior: 'smooth' });
 };
 
 document.getElementById('btnChooseRemote').onclick = () => {
-    unlockAudio();
     const name = document.getElementById('playerName').value.trim() || 'סבא עופר';
     socket.emit('createRoom', name);
 };
 
-// --- תיקון וואטסאפ ---
 document.getElementById('inviteWhatsAppBtn').onclick = () => {
-    if (!currentRoomCode) return;
     const url = `${window.location.origin}?room=${currentRoomCode}`;
     const text = `בוא לשחק איתי איקס מיקס דריקס! 🎮\n${url}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
 };
 
 document.getElementById('localPlayBtn').onclick = () => {
-    unlockAudio();
     const p1 = document.getElementById('playerName').value.trim() || 'סבא עופר';
     const p2 = document.getElementById('localPlayer2Name').value.trim() || 'נכד/ה';
     socket.emit('createLocalRoom', { p1Name: p1, p2Name: p2 });
 };
 
 document.getElementById('joinBtn').onclick = () => {
-    unlockAudio();
     const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
     const name = document.getElementById('playerName').value.trim() || 'אורח';
     if(code) socket.emit('joinRoom', { roomCode: code, playerName: name });
 };
 
 document.getElementById('inviteJoinBtn').onclick = () => {
-    unlockAudio();
     const name = document.getElementById('invitePlayerName').value.trim() || 'אורח/ת';
     socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
 };
 
-// Socket Events
+// Events
 socket.on('roomCreated', (data) => {
     mySymbol = 'X';
     currentRoomCode = data.roomCode;
@@ -103,15 +90,8 @@ function updateUI() {
 
     if (mySymbol === 'BOTH') {
         turnInd.innerText = `תור: ${currentPlayer.name}`;
-        turnInd.style.color = roomData.turn === 'X' ? '#ff4757' : '#1e90ff';
     } else {
-        if (roomData.turn === mySymbol) {
-            turnInd.innerText = "תורך! ✨";
-            turnInd.style.color = "#2ed573";
-        } else {
-            turnInd.innerText = `התור של ${currentPlayer.name}...`;
-            turnInd.style.color = "#a4b0be";
-        }
+        turnInd.innerText = (roomData.turn === mySymbol) ? "תורך! ✨" : `התור של ${currentPlayer.name}...`;
     }
 
     const p1 = roomData.players[0], p2 = roomData.players[1];
@@ -138,11 +118,6 @@ socket.on('roundEnded', ({ room, winnerName }) => {
         document.getElementById('winMessage').innerText = `כל הכבוד ${winnerName}!`;
         document.getElementById('winPopup').classList.remove('hidden');
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
-        if ('speechSynthesis' in window) {
-            const ut = new SpeechSynthesisUtterance(`כל הכבוד ${winnerName}`);
-            ut.lang = 'he-IL';
-            window.speechSynthesis.speak(ut);
-        }
         setTimeout(() => { document.getElementById('winPopup').classList.add('hidden'); updateUI(); }, 3000);
     } else {
         alert("תיקו!");
@@ -153,19 +128,10 @@ socket.on('roundEnded', ({ room, winnerName }) => {
 socket.on('gameOver', ({ room, endTime }) => {
     roomData = room;
     const p1 = room.players[0], p2 = room.players[1];
-    let audioMsg = p1.score > p2.score ? `הניצחון של ${p1.name}` : p2.score > p1.score ? `הניצחון של ${p2.name}` : "כל הכבוד לכולם, התוצאה שוויון";
-    
-    if ('speechSynthesis' in window) {
-        const ut = new SpeechSynthesisUtterance(audioMsg);
-        ut.lang = 'he-IL'; window.speechSynthesis.speak(ut);
-    }
-
     document.getElementById('finalStats').innerHTML = `
         <p>📅 ${room.startDate} | ⏰ ${room.startTime} - ${endTime}</p>
         <hr><p>${p1.name}: ${p1.score}</p><p>${p2.name}: ${p2.score}</p><p>תיקו: ${room.draws}</p>
-        <h3 style="color:#2ed573; font-size:1.8rem; margin-top:15px;">${p1.score > p2.score ? p1.name : p2.score > p1.score ? p2.name : 'תיקו'} ניצח!</h3>
     `;
-
     document.getElementById('finalWhatsAppBtn').onclick = () => {
         const text = `🎮 סיכום איקס מיקס דריקס!\n${p1.name} ${p1.score} - ${p2.score} ${p2.name}`;
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
