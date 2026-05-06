@@ -11,12 +11,11 @@
 <body>
     <header class="game-header-3d">
         <h1>✨ איקס מיקס דריקס ✨</h1>
-        <h2>המשחק של סבא עופר והנכדים</h2>
         <div class="header-illustration">
             <div class="mini-grid-3d">
-                <div class="m-cell"></div><div class="m-cell x-color">X</div><div class="m-cell o-color">O</div>
-                <div class="m-cell x-color">X</div><div class="m-cell o-color">O</div><div class="m-cell"></div>
-                <div class="m-cell o-color">O</div><div class="m-cell"></div><div class="m-cell x-color">X</div>
+                <div class="m-cell"></div><div class="m-cell x-color">X</div><div class="m-cell"></div>
+                <div class="m-cell"></div><div class="m-cell o-color">O</div><div class="m-cell"></div>
+                <div class="m-cell"></div><div class="m-cell"></div><div class="m-cell"></div>
             </div>
         </div>
     </header>
@@ -24,30 +23,23 @@
     <main class="container">
         <div id="lobby" class="screen active">
             <div class="card card-3d card-yellow">
-                <h2 class="welcome-title">ברוכים הבאים! 🎈</h2>
-                <div class="input-wrapper">
-                    <label>איך קוראים לך?</label>
-                    <input type="text" id="playerName" class="input-3d" placeholder="למשל: סבא עופר 👑" autocomplete="off">
-                </div>
+                <h2>ברוכים הבאים! 👋</h2>
+                <input type="text" id="playerName" class="input-3d" placeholder="השם שלך (למשל: סבא עופר)" autocomplete="off">
+                
                 <div class="action-buttons">
-                    <button id="btnChooseLocal" class="btn-3d btn-orange">
-                        <span class="icon">📱</span> משחק באותו מכשיר
-                    </button>
-                    <button id="btnChooseRemote" class="btn-3d btn-blue">
-                        <span class="icon">🌍</span> שלח הזמנה בוואטסאפ
-                    </button>
+                    <button id="btnChooseLocal" class="btn-3d btn-orange">🤝 משחק באותו מכשיר</button>
+                    <button id="btnChooseRemote" class="btn-3d btn-blue">🌍 שלח הזמנה בוואטסאפ</button>
                 </div>
-                <div id="localPlaySection" class="hidden-section box-green">
-                    <label>שם השחקן השני:</label>
-                    <input type="text" id="localPlayer2Name" class="input-3d" placeholder="שם הנכד/ה 👧👦" autocomplete="off">
+
+                <div id="localPlaySection" class="hidden-section">
+                    <input type="text" id="localPlayer2Name" class="input-3d" placeholder="שם השחקן השני">
                     <button id="localPlayBtn" class="btn-3d btn-green">🚀 התחל משחק עכשיו!</button>
                 </div>
-                <div class="divider-3d"><span>או הצטרפו לחדר</span></div>
-                <div class="join-box-3d">
-                    <div class="join-row">
-                        <input type="text" id="roomCodeInput" class="input-3d small-input" placeholder="קוד חדר 🔑">
-                        <button id="joinBtn" class="btn-3d btn-gray">היכנס 🎯</button>
-                    </div>
+
+                <div id="joinSection" style="margin-top:20px;">
+                    <p>או הצטרפו לחדר:</p>
+                    <input type="text" id="roomCodeInput" class="input-3d" placeholder="קוד חדר">
+                    <button id="joinBtn" class="btn-3d btn-gray">היכנס 🎯</button>
                 </div>
             </div>
         </div>
@@ -55,10 +47,11 @@
         <div id="waitingScreen" class="screen">
             <button class="btn-home">🏠</button>
             <div class="card card-3d card-blue">
-                <h2>קוד החדר שלכם: <br><span id="inviteCode" class="room-highlight-3d"></span></h2>
-                <p>שלחו את הקישור לנכד/ה:</p>
-                <button id="inviteWhatsAppBtn" class="btn-3d btn-whatsapp">שלח הזמנה בוואטסאפ 💬</button>
-                <div class="wait-status">מחכים שהשחקן השני יכנס...</div>
+                <h2>קוד החדר שלכם:</h2>
+                <span id="inviteCode" class="room-highlight-3d"></span>
+                <p>שלחו את הקישור בוואטסאפ:</p>
+                <button id="inviteWhatsAppBtn" class="btn-3d btn-whatsapp">שלח הזמנה 💬</button>
+                <p>מחכים לשחקן השני...</p>
             </div>
         </div>
 
@@ -71,26 +64,26 @@
                 <div class="cell-3d" data-index="6"></div><div class="cell-3d" data-index="7"></div><div class="cell-3d" data-index="8"></div>
             </div>
             <div class="footer-stats-3d">
-                <div id="scoreText" class="current-score-3d">טוען...</div>
-                <button id="requestEndBtn" class="btn-3d btn-red" style="margin-top: 15px;">🏁 סיום וסיכום 🏁</button>
+                <div id="scoreText">סבא עופר 0 - 0 נכדים</div>
+                <button id="requestEndBtn" class="btn-3d btn-red">🏁 סיום וסיכום</button>
             </div>
         </div>
 
         <div id="resultsScreen" class="screen">
             <button class="btn-home">🏠</button>
             <div class="card card-3d card-yellow">
-                <h2 class="results-title">🏆 סיכום התחרות 🏆</h2>
-                <div id="finalStats" class="final-details-3d"></div>
-                <button id="finalWhatsAppBtn" class="btn-3d btn-whatsapp" style="margin-top: 15px;">שתף תוצאות בוואטסאפ 💬</button>
+                <h2>🏆 סיכום התחרות 🏆</h2>
+                <div id="finalStats"></div>
+                <button id="finalWhatsAppBtn" class="btn-3d btn-whatsapp">שתף בוואטסאפ 💬</button>
             </div>
         </div>
 
         <div id="inviteJoinScreen" class="screen">
             <button class="btn-home">🏠</button>
             <div class="card card-3d card-green">
-                <p>הוזמנתם לחדר: <strong id="invitedRoomDisplay" class="room-highlight-3d"></strong></p>
+                <p>הוזמנתם לחדר: <strong id="invitedRoomDisplay"></strong></p>
                 <input type="text" id="invitePlayerName" class="input-3d" placeholder="איך קוראים לך?">
-                <button id="inviteJoinBtn" class="btn-3d btn-blue" style="margin-top: 15px;">היכנס למשחק 🎮</button>
+                <button id="inviteJoinBtn" class="btn-3d btn-blue">היכנס למשחק 🎮</button>
             </div>
         </div>
     </main>
