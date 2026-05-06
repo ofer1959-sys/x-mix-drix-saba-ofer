@@ -3,7 +3,6 @@ let mySymbol = '';
 let currentRoomCode = '';
 let roomData = null;
 
-// פתיחת אודיו לאייפון
 function unlockAudio() {
     if ('speechSynthesis' in window) {
         const msg = new SpeechSynthesisUtterance('');
@@ -11,46 +10,58 @@ function unlockAudio() {
     }
 }
 
-function showScreen(name) {
+function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(name).classList.add('active');
+    document.getElementById(screenId).classList.add('active');
 }
 
-// === התיקון: הכרחת פתיחת חלון המשחק המקומי ===
-document.getElementById('btnChooseLocal').onclick = function() {
+// כפתורי בית - פשוט מרעננים את הדף
+document.querySelectorAll('.btn-home').forEach(btn => {
+    btn.onclick = () => location.href = '/';
+});
+
+// לובי
+document.getElementById('btnChooseLocal').onclick = () => {
     const section = document.getElementById('localPlaySection');
-    
-    // מוודא שהחלון נפתח ישירות ללא תלות בעיצוב הקודם
-    if (section.style.display === 'block') {
-        section.style.display = 'none';
-    } else {
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth' });
-    }
+    section.style.display = (section.style.display === 'block') ? 'none' : 'block';
+    section.scrollIntoView({ behavior: 'smooth' });
 };
 
-document.getElementById('btnChooseRemote').onclick = function() {
+document.getElementById('btnChooseRemote').onclick = () => {
     unlockAudio();
     const name = document.getElementById('playerName').value.trim() || 'סבא עופר';
     socket.emit('createRoom', name);
 };
 
-document.getElementById('localPlayBtn').onclick = function() {
+// --- תיקון וואטסאפ ---
+document.getElementById('inviteWhatsAppBtn').onclick = () => {
+    if (!currentRoomCode) return;
+    const url = `${window.location.origin}?room=${currentRoomCode}`;
+    const text = `בוא לשחק איתי איקס מיקס דריקס! 🎮\n${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+document.getElementById('localPlayBtn').onclick = () => {
     unlockAudio();
     const p1 = document.getElementById('playerName').value.trim() || 'סבא עופר';
     const p2 = document.getElementById('localPlayer2Name').value.trim() || 'נכד/ה';
     socket.emit('createLocalRoom', { p1Name: p1, p2Name: p2 });
 };
 
-document.getElementById('joinBtn').onclick = function() {
+document.getElementById('joinBtn').onclick = () => {
     unlockAudio();
     const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
     const name = document.getElementById('playerName').value.trim() || 'אורח';
     if(code) socket.emit('joinRoom', { roomCode: code, playerName: name });
 };
 
-// --- אירועי רשת ---
+document.getElementById('inviteJoinBtn').onclick = () => {
+    unlockAudio();
+    const name = document.getElementById('invitePlayerName').value.trim() || 'אורח/ת';
+    socket.emit('joinRoom', { roomCode: currentRoomCode, playerName: name });
+};
 
+// Socket Events
 socket.on('roomCreated', (data) => {
     mySymbol = 'X';
     currentRoomCode = data.roomCode;
@@ -80,9 +91,11 @@ socket.on('updateBoard', (room) => {
 function updateUI() {
     if (!roomData) return;
     roomData.board.forEach((val, i) => {
-        const cell = document.querySelector(`.cell[data-index="${i}"]`);
-        cell.innerText = val;
-        cell.className = `cell ${val ? val.toLowerCase() : ''}`;
+        const cell = document.querySelector(`.cell-3d[data-index="${i}"]`);
+        if (cell) {
+            cell.innerText = val;
+            cell.className = `cell-3d ${val ? val.toLowerCase() : ''}`;
+        }
     });
 
     const turnInd = document.getElementById('turnIndicator');
@@ -90,14 +103,14 @@ function updateUI() {
 
     if (mySymbol === 'BOTH') {
         turnInd.innerText = `תור: ${currentPlayer.name}`;
-        turnInd.style.color = roomData.turn === 'X' ? '#e74c3c' : '#3498db';
+        turnInd.style.color = roomData.turn === 'X' ? '#ff4757' : '#1e90ff';
     } else {
         if (roomData.turn === mySymbol) {
             turnInd.innerText = "תורך! ✨";
-            turnInd.style.color = "#2ecc71";
+            turnInd.style.color = "#2ed573";
         } else {
             turnInd.innerText = `התור של ${currentPlayer.name}...`;
-            turnInd.style.color = "#95a5a6";
+            turnInd.style.color = "#a4b0be";
         }
     }
 
@@ -107,7 +120,7 @@ function updateUI() {
     }
 }
 
-document.querySelectorAll('.cell').forEach(cell => {
+document.querySelectorAll('.cell-3d').forEach(cell => {
     cell.onclick = () => {
         const idx = cell.getAttribute('data-index');
         if (roomData && roomData.board[idx] === '') {
@@ -125,7 +138,6 @@ socket.on('roundEnded', ({ room, winnerName }) => {
         document.getElementById('winMessage').innerText = `כל הכבוד ${winnerName}!`;
         document.getElementById('winPopup').classList.remove('hidden');
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
-        
         if ('speechSynthesis' in window) {
             const ut = new SpeechSynthesisUtterance(`כל הכבוד ${winnerName}`);
             ut.lang = 'he-IL';
@@ -138,44 +150,26 @@ socket.on('roundEnded', ({ room, winnerName }) => {
     }
 });
 
-// סיום תחרות מסונכרן וקריינות
 socket.on('gameOver', ({ room, endTime }) => {
     roomData = room;
     const p1 = room.players[0], p2 = room.players[1];
+    let audioMsg = p1.score > p2.score ? `הניצחון של ${p1.name}` : p2.score > p1.score ? `הניצחון של ${p2.name}` : "כל הכבוד לכולם, התוצאה שוויון";
     
-    // הכנת הטקסט להקראה קולית
-    let audioMsg = "";
-    if (p1.score > p2.score) {
-        audioMsg = `הניצחון של ${p1.name}`;
-    } else if (p2.score > p1.score) {
-        audioMsg = `הניצחון של ${p2.name}`;
-    } else {
-        audioMsg = "כל הכבוד לכולם, התוצאה שוויון";
-    }
-
-    // הפעלת האודיו
     if ('speechSynthesis' in window) {
         const ut = new SpeechSynthesisUtterance(audioMsg);
-        ut.lang = 'he-IL'; 
-        window.speechSynthesis.speak(ut);
+        ut.lang = 'he-IL'; window.speechSynthesis.speak(ut);
     }
-
-    const winMsg = p1.score > p2.score ? `המנצח: ${p1.name}` : p2.score > p1.score ? `המנצחת: ${p2.name}` : "תיקו!";
 
     document.getElementById('finalStats').innerHTML = `
         <p>📅 ${room.startDate} | ⏰ ${room.startTime} - ${endTime}</p>
-        <hr>
-        <p>${p1.name}: ${p1.score}</p>
-        <p>${p2.name}: ${p2.score}</p>
-        <p>תיקו: ${room.draws}</p>
-        <h3>${winMsg}</h3>
+        <hr><p>${p1.name}: ${p1.score}</p><p>${p2.name}: ${p2.score}</p><p>תיקו: ${room.draws}</p>
+        <h3 style="color:#2ed573; font-size:1.8rem; margin-top:15px;">${p1.score > p2.score ? p1.name : p2.score > p1.score ? p2.name : 'תיקו'} ניצח!</h3>
     `;
 
     document.getElementById('finalWhatsAppBtn').onclick = () => {
-        const text = `🎮 סיכום איקס מיקס דריקס!\n${p1.name} ${p1.score} - ${p2.score} ${p2.name}\n${winMsg}`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+        const text = `🎮 סיכום איקס מיקס דריקס!\n${p1.name} ${p1.score} - ${p2.score} ${p2.name}`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     };
-
     showScreen('resultsScreen');
 });
 
@@ -183,7 +177,6 @@ document.getElementById('requestEndBtn').onclick = () => {
     socket.emit('requestEndGame', currentRoomCode);
 };
 
-// טיפול בקישור הזמנה ישיר
 window.addEventListener('load', () => {
     const r = new URLSearchParams(window.location.search).get('room');
     if (r) {
