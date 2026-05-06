@@ -1,183 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;900&display=swap');
+
 :root {
-    --primary: #3498db;
-    --accent: #e67e22;
-    --success: #2ecc71;
-    --danger: #e74c3c;
-    --bg: #f8f9fa;
-    --card-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    --x-color: #ff4757;
+    --o-color: #1e90ff;
+    --bg-gradient: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
 }
 
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: var(--bg);
+    font-family: 'Rubik', sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
     margin: 0;
     direction: rtl;
-    color: #2c3e50;
+    color: #2f3542;
 }
 
-.main-game-header {
-    background: white;
-    padding: 15px;
+/* כותרת משחקייה */
+.game-header-3d {
+    background: #ffffff;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 20px 10px;
+    margin-bottom: 20px;
+    border-bottom: 5px solid #dfe4ea;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    border-radius: 0 0 30px 30px;
 }
 
-.main-game-header h1 {
+.game-header-3d h1 {
     margin: 0;
-    color: var(--primary);
-    font-size: 1.6rem;
+    color: #ff6348;
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 0px #feca57;
 }
 
-.header-graphic {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
+.game-header-3d h2 {
+    margin: 5px 0 15px 0;
+    color: #57606f;
+    font-size: 1.2rem;
 }
 
-.mini-board-icon {
+/* איור לוח קטן */
+.header-illustration { display: flex; justify-content: center; }
+.mini-grid-3d {
     display: grid;
-    grid-template-columns: repeat(3, 22px);
-    grid-template-rows: repeat(3, 22px);
-    gap: 3px;
-    background: #bdc3c7;
-    padding: 3px;
-    border-radius: 5px;
+    grid-template-columns: repeat(3, 28px);
+    grid-template-rows: repeat(3, 28px);
+    gap: 4px;
+    background: #ced6e0;
+    padding: 6px;
+    border-radius: 10px;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
 }
-
 .m-cell {
     background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    border-radius: 2px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px;
+    box-shadow: 0 2px 0 #dfe4ea;
+}
+.x-color { color: var(--x-color); }
+.o-color { color: var(--o-color); }
+
+.container {
+    display: flex; flex-direction: column; align-items: center; padding: 10px 20px 40px;
 }
 
-.x-color { color: var(--danger); }
-.o-color { color: var(--primary); }
-
-.content-wrapper {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.screen { display: none; width: 100%; max-width: 420px; }
+.screen { display: none; width: 100%; max-width: 450px; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .screen.active { display: block; }
 
-.card {
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* כרטיסיות תלת מימד */
+.card-3d {
     background: white;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: var(--card-shadow);
+    padding: 30px 20px;
+    border-radius: 25px;
+    border: 4px solid white;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 0 #dfe4ea;
     text-align: center;
 }
 
-.styled-input {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 2px solid #ecf0f1;
-    border-radius: 12px;
-    font-size: 16px;
-    box-sizing: border-box;
+.card-yellow { border-color: #fff200; }
+.card-blue { border-color: #7bed9f; }
+.card-green { border-color: #a4b0be; }
+
+.welcome-title { font-size: 2rem; color: #3742fa; margin-top: 0; }
+
+/* שדות טקסט מעוגלים ורכים */
+.input-wrapper label {
+    display: block; text-align: right; font-weight: bold; color: #57606f; margin-bottom: 8px; font-size: 1.1rem;
 }
 
-.action-btn {
+.input-3d {
     width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 12px;
+    padding: 16px;
+    border: 3px solid #dfe4ea;
+    border-radius: 18px;
     font-size: 18px;
+    background: #f1f2f6;
+    box-sizing: border-box;
+    font-family: 'Rubik', sans-serif;
     font-weight: bold;
-    cursor: pointer;
-    color: white;
-    transition: 0.2s;
+    color: #2f3542;
+    transition: all 0.2s;
 }
 
-.local-style { background: linear-gradient(135deg, #f39c12, var(--accent)); }
-.remote-style { background: linear-gradient(135deg, #3498db, #2980b9); }
+.input-3d:focus {
+    border-color: #ff7f50; background: white; outline: none; box-shadow: 0 0 0 4px rgba(255, 127, 80, 0.2);
+}
 
+/* כפתורי תלת מימד בולטים */
+.btn-3d {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 18px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: white;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    margin: 8px 0;
+    position: relative;
+    top: 0;
+    transition: all 0.1s;
+}
+
+.btn-3d:active { top: 5px; } /* אפקט לחיצה פיזי */
+
+.btn-orange { background: #ffa502; box-shadow: 0 6px 0 #e67e22; }
+.btn-orange:active { box-shadow: 0 1px 0 #e67e22; }
+
+.btn-blue { background: #1e90ff; box-shadow: 0 6px 0 #3742fa; }
+.btn-blue:active { box-shadow: 0 1px 0 #3742fa; }
+
+.btn-green { background: #2ed573; box-shadow: 0 6px 0 #2ecc71; margin-top: 15px; }
+.btn-green:active { box-shadow: 0 1px 0 #2ecc71; }
+
+.btn-gray { background: #a4b0be; box-shadow: 0 6px 0 #747d8c; }
+.btn-gray:active { box-shadow: 0 1px 0 #747d8c; }
+
+.btn-whatsapp { background: #25d366; box-shadow: 0 6px 0 #1da851; }
+.btn-whatsapp:active { box-shadow: 0 1px 0 #1da851; }
+
+.btn-red { background: #ff4757; box-shadow: 0 6px 0 #c0392b; }
+.btn-red:active { box-shadow: 0 1px 0 #c0392b; }
+
+.action-buttons { margin-top: 25px; }
+
+/* אזור שחקן שני נסתר */
 .hidden-section {
     display: none;
-    background: #fff9f0;
-    padding: 15px;
-    border-radius: 15px;
-    border: 2px dashed var(--accent);
-    margin-top: 15px;
+    background: #eccc68;
+    padding: 20px;
+    border-radius: 20px;
+    margin-top: 20px;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
 }
 
-.hidden-section.show { display: block; animation: fadeIn 0.4s; }
+/* מפריד מעוצב */
+.divider-3d { margin: 30px 0; text-align: center; border-bottom: 3px dashed #ced6e0; line-height: 0.1em; }
+.divider-3d span { background: white; padding: 0 15px; color: #a4b0be; font-weight: bold; }
 
-.btn-start-now {
-    width: 100%;
-    padding: 12px;
-    background: var(--success);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    margin-top: 10px;
-    cursor: pointer;
-}
+/* הצטרפות למטה */
+.join-box-3d { background: #f1f2f6; padding: 20px; border-radius: 20px; border: 2px dashed #a4b0be; }
+.join-row { display: flex; gap: 10px; margin-top: 10px; }
+.small-input { flex: 2; margin: 0; }
+.join-row .btn-3d { flex: 1; margin: 0; padding: 10px; }
 
-.bottom-join {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
+/* תצוגת חדר */
+.room-highlight-3d { font-size: 2.5rem; color: #ff4757; background: #ffeaa7; padding: 5px 20px; border-radius: 15px; display: inline-block; margin: 15px 0; border: 3px dashed #ff6b81; }
+.waiting-illustration { font-size: 4rem; margin: 10px 0; animation: bounce 2s infinite; }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
-.join-row { display: flex; gap: 10px; }
-.small-input { flex: 1; margin: 0; }
-.btn-join-action { background: #7f8c8d; color: white; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; }
+/* לוח המשחק הגדול */
+.game-status-bubble { background: white; padding: 15px; border-radius: 20px; font-size: 1.5rem; font-weight: bold; box-shadow: 0 6px 0 #dfe4ea; margin-bottom: 25px; text-align: center; border: 3px solid #f1f2f6; }
 
-/* לוח המשחק */
-.board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin: 20px 0;
-}
+.board-3d { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 30px 0; }
 
-.cell {
+.cell-3d {
     aspect-ratio: 1;
     background: white;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 45px;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 65px; font-weight: 900;
+    box-shadow: 0 10px 0 #dfe4ea;
     cursor: pointer;
+    transition: all 0.1s;
+    border: 3px solid #f1f2f6;
 }
+.cell-3d:active { transform: translateY(6px); box-shadow: 0 4px 0 #dfe4ea; }
+.cell-3d.x { color: var(--x-color); text-shadow: 3px 3px 0 #ffc0c8; }
+.cell-3d.o { color: var(--o-color); text-shadow: 3px 3px 0 #cde3fa; }
 
-.cell.x { color: var(--danger); }
-.cell.o { color: var(--primary); }
+/* לוח תוצאות תחתון */
+.footer-stats-3d { background: #2f3542; color: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 8px 0 #1e272e; }
+.current-score-3d { font-size: 1.8rem; font-weight: bold; color: #eccc68; }
 
-.game-status-bar {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    text-align: center;
-}
+/* פופאפ ניצחון */
+.popup-win { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff200; padding: 40px 60px; border-radius: 40px; border: 8px solid #ff4757; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 1000; text-align: center; }
+.popup-win h1 { margin: 0; color: #ff4757; font-size: 3.5rem; font-weight: 900; }
+.hidden { display: none !important; }
 
-.btn-finish-series {
-    background: var(--danger);
-    color: white;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    margin-top: 20px;
-    cursor: pointer;
-}
+/* סיכום */
+.results-title { font-size: 2.5rem; color: #ff4757; text-shadow: 2px 2px 0 #ffeaa7; }
+.final-details-3d { font-size: 1.3rem; font-weight: bold; background: #f1f2f6; padding: 20px; border-radius: 15px; text-align: right; }
+.final-details-3d hr { border: 2px dashed #ced6e0; margin: 15px 0; }
+.final-details-3d h3 { color: #2ed573; font-size: 1.8rem; text-align: center; margin-bottom: 0; }
 
-.whatsapp-send-btn { background: #25d366; color: white; width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; }
-.btn-restart { background: #95a5a6; color: white; width: 100%; padding: 10px; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+/* קלאסים לעדכון ה-JS */
+.cell { } /* תמיכה אחורנית לקוד ה-JS - לא למחוק */
