@@ -11,7 +11,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// פונקציה חרישית לשליחת המייל - עם "תעודת זהות" של האתר כדי לעקוף חסימה
+// === הגדרת הקישור הפרטי לגוגל ===
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXRRdnInT0MMpLai7xZl6WdwRy9cwhaSC3t7wUBkO4R2ZWuRevh50bfGOLR2HzyMvFQ/exec";
+
+// פונקציה חרישית לשליחת המייל - דרך השרתים היציבים של גוגל
 async function sendResultsEmailSilent(room, endTime) {
     if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) return;
 
@@ -21,26 +24,23 @@ async function sendResultsEmailSilent(room, endTime) {
 
     const emailBody = `סיכום תחרות איקס מיקס דריקס:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`;
 
+    if (GOOGLE_SCRIPT_URL === "הדבק_כאן_את_הקישור_מגוגל") {
+        console.log("שים לב: יש לעדכן את הקישור של גוגל בקוד!");
+        return;
+    }
+
     try {
-        const response = await fetch(`https://formsubmit.co/ajax/${process.env.EMAIL_USER}`, {
-            method: "POST",
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                // התיקון שלנו: מצהירים על הכתובת של האתר כדי ש-FormSubmit יאשר
-                'Origin': 'https://x-mix-drix-saba-ofer.onrender.com',
-                'Referer': 'https://x-mix-drix-saba-ofer.onrender.com/'
-            },
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
             body: JSON.stringify({
-                _subject: "תוצאות משחק איקס מיקס דריקס",
+                subject: "תוצאות משחק איקס מיקס דריקס",
                 message: emailBody
             })
         });
-        const data = await response.json();
-        console.log("Email API response:", data);
+        console.log("Email sent successfully via Google Script!");
         room.emailSent = true;
-    } catch (e) { 
-        console.log("Email failed via API:", e); 
+    } catch (e) {
+        console.log("Email failed via Google Script:", e);
     }
 }
 
