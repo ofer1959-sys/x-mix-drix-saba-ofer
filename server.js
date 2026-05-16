@@ -11,8 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// === הקישור הפרטי שלך לגוגל ===
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLw8rIAXq6t1DZ2Eg99DSEhYzaW_Zf-v08E54s5eBUbmqzrgEppn1CKyxtlqJDiKskcg/exec";
+// === הקישור הפרטי והמעודכן שלך לגוגל ===
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUyybks_Vz98vtMxzE2YTsIh_4XSfAiDfJwCy-vF8O2LkfXWpa8k9CMESMspy8vXgCfw/exec";
 
 // פונקציה חרישית לשליחת המייל - עם קריאת הטקסט המלא מגוגל
 async function sendResultsEmailSilent(room, endTime) {
