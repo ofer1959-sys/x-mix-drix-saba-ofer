@@ -11,12 +11,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let rooms = {};
 
-// === הגדרת הקישור הפרטי לגוגל ===
+// === הקישור הפרטי שלך לגוגל ===
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXRRdnInT0MMpLai7xZl6WdwRy9cwhaSC3t7wUBkO4R2ZWuRevh50bfGOLR2HzyMvFQ/exec";
 
 // פונקציה חרישית לשליחת המייל - דרך השרתים היציבים של גוגל
 async function sendResultsEmailSilent(room, endTime) {
-    if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) return;
+    if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) {
+        console.log("בוטל: המייל כבר נשלח או שלא שוחקו משחקים מלאים.");
+        return;
+    }
 
     const p1 = room.players[0];
     const p2 = room.players[1] || { name: 'שחקן 2', score: 0 };
@@ -24,23 +27,23 @@ async function sendResultsEmailSilent(room, endTime) {
 
     const emailBody = `סיכום תחרות איקס מיקס דריקס:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`;
 
-    if (GOOGLE_SCRIPT_URL === "הדבק_כאן_את_הקישור_מגוגל") {
-        console.log("שים לב: יש לעדכן את הקישור של גוגל בקוד!");
-        return;
-    }
-
     try {
-        await fetch(GOOGLE_SCRIPT_URL, {
+        console.log("מנסה לשלוח נתונים לגוגל...");
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
+            // התיקון הקריטי: אומרים לגוגל לקרוא את זה כ-JSON
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 subject: "תוצאות משחק איקס מיקס דריקס",
                 message: emailBody
             })
         });
-        console.log("Email sent successfully via Google Script!");
+        console.log("תשובת שרת גוגל (סטטוס):", response.status);
         room.emailSent = true;
     } catch (e) {
-        console.log("Email failed via Google Script:", e);
+        console.log("שגיאה בניסיון לשלוח לגוגל:", e);
     }
 }
 
