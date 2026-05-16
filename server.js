@@ -12,9 +12,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 let rooms = {};
 
 // === הקישור הפרטי שלך לגוגל ===
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXRRdnInT0MMpLai7xZl6WdwRy9cwhaSC3t7wUBkO4R2ZWuRevh50bfGOLR2HzyMvFQ/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLw8rIAXq6t1DZ2Eg99DSEhYzaW_Zf-v08E54s5eBUbmqzrgEppn1CKyxtlqJDiKskcg/exec";
 
-// פונקציה חרישית לשליחת המייל - דרך השרתים היציבים של גוגל
+// פונקציה חרישית לשליחת המייל - עם קריאת הטקסט המלא מגוגל
 async function sendResultsEmailSilent(room, endTime) {
     if (room.emailSent || (room.players[0].score + (room.players[1]?.score || 0) + room.draws === 0)) {
         console.log("בוטל: המייל כבר נשלח או שלא שוחקו משחקים מלאים.");
@@ -27,11 +27,15 @@ async function sendResultsEmailSilent(room, endTime) {
 
     const emailBody = `סיכום תחרות איקס מיקס דריקס:\n\nשחקנים: ${p1.name} ו-${p2.name}\nניצחונות ${p1.name}: ${p1.score}\nניצחונות ${p2.name}: ${p2.score}\nתיקו: ${room.draws}\nהמנצח: ${winMsg}\n\nתאריך: ${room.startDate}\nזמן: ${room.startTime} - ${endTime || 'סגירת דפדפן'}`;
 
+    if (GOOGLE_SCRIPT_URL === "הדבק_כאן_את_הקישור_החדש_מגוגל") {
+        console.log("שים לב: יש לעדכן את הקישור של גוגל בקוד!");
+        return;
+    }
+
     try {
         console.log("מנסה לשלוח נתונים לגוגל...");
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            // התיקון הקריטי: אומרים לגוגל לקרוא את זה כ-JSON
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -40,7 +44,11 @@ async function sendResultsEmailSilent(room, endTime) {
                 message: emailBody
             })
         });
-        console.log("תשובת שרת גוגל (סטטוס):", response.status);
+        
+        // קוראים את התשובה המילולית המדויקת של גוגל
+        const responseText = await response.text();
+        console.log("תשובת שרת גוגל המלאה:", responseText);
+        
         room.emailSent = true;
     } catch (e) {
         console.log("שגיאה בניסיון לשלוח לגוגל:", e);
